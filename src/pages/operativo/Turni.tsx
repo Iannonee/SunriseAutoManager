@@ -1,9 +1,42 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { IconPlus, IconPencil, IconTrash, IconClock } from '@tabler/icons-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Turno, Profile, isAdmin, fullName } from '../../types';
 import Modal from '../../components/ui/Modal';
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '10px',
+  fontWeight: 500,
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  borderRadius: '8px',
+  backgroundColor: '#0a0a0a',
+  border: '0.5px solid #2a2a2a',
+  color: '#ffffff',
+  fontSize: '13px',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const thStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '10px 14px',
+  fontSize: '10px',
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '2px',
+  fontWeight: 500,
+  whiteSpace: 'nowrap',
+};
 
 export default function Turni() {
   const { profile } = useAuth();
@@ -112,73 +145,108 @@ export default function Turni() {
     return t.created_by === profile?.id;
   }
 
+  // Last turno for current user
+  const myLastTurno = records.find(r => r.dipendente_id === profile?.id);
+
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Turni</h1>
-          <p className="text-gray-400 text-sm mt-0.5">
-            {admin ? `${records.length} turni registrati (tutti)` : 'I tuoi turni'}
-          </p>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>Turni</span>
+          <span style={{ fontSize: '11px', color: '#e8a020', backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', borderRadius: '6px', padding: '2px 8px' }}>
+            {admin ? `${records.length} turni` : 'I tuoi turni'}
+          </span>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 transition-all"
-          style={{ backgroundColor: '#e8a020' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, border: 'none', cursor: 'pointer' }}
+          onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+          onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
         >
-          <Plus className="w-4 h-4" />
+          <IconPlus size={15} />
           Aggiungi Turno
         </button>
       </div>
 
+      {/* Il mio ultimo turno */}
+      {myLastTurno && (
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '12px', padding: '16px 20px' }}>
+          <div style={{ fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
+            Il mio ultimo turno
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <IconClock size={14} style={{ color: '#e8a020' }} />
+              <span style={{ fontSize: '13px', color: '#ffffff' }}>{formatDate(myLastTurno.data)}</span>
+            </div>
+            <span style={{ fontSize: '13px', color: '#888888' }}>{myLastTurno.ora_inizio.slice(0, 5)} — {myLastTurno.ora_fine.slice(0, 5)}</span>
+            <span style={{ fontSize: '12px', color: '#e8a020', backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', borderRadius: '6px', padding: '2px 8px' }}>
+              {myLastTurno.ore_totali}h
+            </span>
+          </div>
+        </div>
+      )}
+
       {!admin && (
-        <div className="rounded-xl border border-gray-700 px-4 py-3 text-sm text-gray-400" style={{ backgroundColor: '#111111' }}>
-          Puoi visualizzare e modificare solo i tuoi turni. La direzione puo vedere tutti i turni.
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#888888' }}>
+          Puoi visualizzare e modificare solo i tuoi turni. La direzione può vedere tutti i turni.
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Caricamento...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
       ) : records.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">Nessun turno registrato.</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Nessun turno registrato.</div>
       ) : (
-        <div className="rounded-2xl border border-gray-800 overflow-hidden" style={{ backgroundColor: '#111111' }}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Dipendente</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Data</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Inizio</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Fine</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Ore Totali</th>
-                  <th className="px-4 py-3" />
+                <tr style={{ borderBottom: '0.5px solid #1e1e1e' }}>
+                  <th style={thStyle}>Dipendente</th>
+                  <th style={thStyle}>Data</th>
+                  <th style={thStyle}>Inizio</th>
+                  <th style={thStyle}>Fine</th>
+                  <th style={thStyle}>Ore Totali</th>
+                  <th style={{ ...thStyle, width: '60px' }} />
                 </tr>
               </thead>
               <tbody>
-                {records.map((r, i) => {
+                {records.map(r => {
                   const editable = canEditTurno(r);
                   return (
-                    <tr key={r.id} className={`border-b border-gray-800/50 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-white/[0.02]'}`}>
-                      <td className="px-4 py-3 text-white font-medium">{r.dipendente ? fullName(r.dipendente as Parameters<typeof fullName>[0]) : '—'}</td>
-                      <td className="px-4 py-3 text-gray-300">{formatDate(r.data)}</td>
-                      <td className="px-4 py-3 text-gray-300">{r.ora_inizio.slice(0, 5)}</td>
-                      <td className="px-4 py-3 text-gray-300">{r.ora_fine.slice(0, 5)}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: '#e8a02020', color: '#e8a020' }}>
+                    <tr
+                      key={r.id}
+                      style={{ borderBottom: '0.5px solid #1a1a1a', transition: 'background-color 0.1s' }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#ffffff05')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent')}
+                    >
+                      <td style={{ padding: '10px 14px', color: '#ffffff', fontWeight: 500 }}>{r.dipendente ? fullName(r.dipendente as Parameters<typeof fullName>[0]) : '—'}</td>
+                      <td style={{ padding: '10px 14px', color: '#888888' }}>{formatDate(r.data)}</td>
+                      <td style={{ padding: '10px 14px', color: '#888888' }}>{r.ora_inizio.slice(0, 5)}</td>
+                      <td style={{ padding: '10px 14px', color: '#888888' }}>{r.ora_fine.slice(0, 5)}</td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{ fontSize: '12px', color: '#e8a020', backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', borderRadius: '6px', padding: '2px 8px' }}>
                           {r.ore_totali}h
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1.5">
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
                           {editable && (
-                            <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
-                              <Pencil className="w-3.5 h-3.5" />
+                            <button onClick={() => openEdit(r)}
+                              style={{ padding: '5px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff10'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                              <IconPencil size={13} />
                             </button>
                           )}
                           {admin && (
-                            <button onClick={() => setDeleteConfirm(r.id)} className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/20 transition-colors">
-                              <Trash2 className="w-3.5 h-3.5" />
+                            <button onClick={() => setDeleteConfirm(r.id)}
+                              style={{ padding: '5px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                              <IconTrash size={13} />
                             </button>
                           )}
                         </div>
@@ -194,52 +262,66 @@ export default function Turni() {
 
       {modalOpen && (
         <Modal title={editing ? 'Modifica Turno' : 'Aggiungi Turno'} onClose={() => setModalOpen(false)}>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Dipendente</label>
+              <label style={labelStyle}>Dipendente</label>
               {admin ? (
-                <select
-                  value={form.dipendente_id}
-                  onChange={e => setForm(f => ({ ...f, dipendente_id: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                >
+                <select value={form.dipendente_id} onChange={e => setForm(f => ({ ...f, dipendente_id: e.target.value }))}
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                   <option value="">Seleziona dipendente</option>
                   {profiles.map(p => (
                     <option key={p.id} value={p.id}>{fullName(p)} — {p.role}</option>
                   ))}
                 </select>
               ) : (
-                <div className="px-3 py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm">
+                <div style={{ ...inputStyle, color: '#888888', cursor: 'default' }}>
                   {profile ? `${fullName(profile)} (tu)` : '—'}
                 </div>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Data</label>
+              <label style={labelStyle}>Data</label>
               <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
+                style={inputStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Ora Inizio</label>
+                <label style={labelStyle}>Ora Inizio</label>
                 <input type="time" value={form.ora_inizio} onChange={e => setForm(f => ({ ...f, ora_inizio: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
+                  style={inputStyle}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Ora Fine</label>
+                <label style={labelStyle}>Ora Fine</label>
                 <input type="time" value={form.ora_fine} onChange={e => setForm(f => ({ ...f, ora_fine: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
+                  style={inputStyle}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
               </div>
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: '#0a0a0a' }}>
-              <p className="text-gray-400 text-sm">
-                Ore calcolate: <span className="font-semibold text-white">{calcOre(form.ora_inizio, form.ora_fine)}h</span>
-              </p>
+            <div style={{ backgroundColor: '#0a0a0a', border: '0.5px solid #1e1e1e', borderRadius: '8px', padding: '10px 14px' }}>
+              <span style={{ fontSize: '13px', color: '#888888' }}>
+                Ore calcolate:{' '}
+                <span style={{ color: '#ffffff', fontWeight: 500 }}>{calcOre(form.ora_inizio, form.ora_fine)}h</span>
+              </span>
             </div>
-            {error && <div className="text-red-400 text-sm">{error}</div>}
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5">Annulla</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 disabled:opacity-50" style={{ backgroundColor: '#e8a020' }}>
+            {error && <div style={{ fontSize: '13px', color: '#f87171' }}>{error}</div>}
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+              <button onClick={() => setModalOpen(false)}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                Annulla
+              </button>
+              <button onClick={handleSave} disabled={saving}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}>
                 {saving ? 'Salvataggio...' : editing ? 'Salva' : 'Aggiungi'}
               </button>
             </div>
@@ -249,10 +331,20 @@ export default function Turni() {
 
       {deleteConfirm && (
         <Modal title="Conferma Eliminazione" onClose={() => setDeleteConfirm(null)}>
-          <p className="text-gray-300 mb-6">Eliminare questo turno?</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm">Annulla</button>
-            <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500">Elimina</button>
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>Eliminare questo turno?</p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setDeleteConfirm(null)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+              Annulla
+            </button>
+            <button onClick={() => handleDelete(deleteConfirm)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dc2626')}>
+              Elimina
+            </button>
           </div>
         </Modal>
       )}

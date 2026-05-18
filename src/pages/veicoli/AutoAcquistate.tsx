@@ -1,10 +1,43 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { IconPlus, IconPencil, IconTrash } from '@tabler/icons-react';
 import PriceInput, { parsePrice } from '../../components/ui/PriceInput';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { AutoAcquistata, Profile, isAdmin, canEditAutoAcquistate, fullName } from '../../types';
+import { AutoAcquistata, Profile, canEditAutoAcquistate, fullName } from '../../types';
 import Modal from '../../components/ui/Modal';
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '10px',
+  fontWeight: 500,
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  borderRadius: '8px',
+  backgroundColor: '#0a0a0a',
+  border: '0.5px solid #2a2a2a',
+  color: '#ffffff',
+  fontSize: '13px',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const thStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '10px 14px',
+  fontSize: '10px',
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '2px',
+  fontWeight: 500,
+  whiteSpace: 'nowrap',
+};
 
 export default function AutoAcquistate() {
   const { profile } = useAuth();
@@ -119,67 +152,115 @@ export default function AutoAcquistate() {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('it-IT');
   const canEdit = canEditAutoAcquistate(profile?.role);
 
+  const totalSpesa = records.reduce((s, r) => s + r.prezzo_acquisto, 0);
+
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Auto Acquistate</h1>
-          <p className="text-gray-400 text-sm mt-0.5">{records.length} acquisti registrati</p>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>Auto Acquistate</span>
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#e8a020',
+              backgroundColor: '#e8a02015',
+              border: '0.5px solid #e8a02033',
+              borderRadius: '6px',
+              padding: '2px 8px',
+            }}
+          >
+            {records.length} acquisti
+          </span>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 transition-all"
-          style={{ backgroundColor: '#e8a020' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#e8a020',
+            color: '#000000',
+            fontSize: '13px',
+            fontWeight: 500,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+          onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
         >
-          <Plus className="w-4 h-4" />
+          <IconPlus size={15} />
           Nuovo Acquisto
         </button>
       </div>
 
+      {/* Metric cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '8px', padding: '12px 16px' }}>
+          <div style={{ fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Totale Acquisti</div>
+          <div style={{ fontSize: '22px', fontWeight: 500, color: '#ffffff' }}>{records.length}</div>
+        </div>
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '8px', padding: '12px 16px' }}>
+          <div style={{ fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Spesa Totale</div>
+          <div style={{ fontSize: '22px', fontWeight: 500, color: '#e8a020' }}>{formatEuro(totalSpesa)}</div>
+        </div>
+      </div>
+
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Caricamento...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
       ) : records.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">Nessun acquisto registrato.</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Nessun acquisto registrato.</div>
       ) : (
-        <div className="rounded-2xl border border-gray-800 overflow-hidden" style={{ backgroundColor: '#111111' }}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Modello</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Colore</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Prezzo Acquisto</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Venduto Da</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Dipendente</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Data</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Aggiunto Da</th>
-                  {canEdit && <th className="px-4 py-3" />}
+                <tr style={{ borderBottom: '0.5px solid #1e1e1e' }}>
+                  <th style={thStyle}>Modello</th>
+                  <th style={thStyle}>Colore</th>
+                  <th style={thStyle}>Prezzo Acquisto</th>
+                  <th style={thStyle}>Venduto Da</th>
+                  <th style={thStyle}>Dipendente</th>
+                  <th style={thStyle}>Data</th>
+                  <th style={thStyle}>Aggiunto Da</th>
+                  {canEdit && <th style={{ ...thStyle, width: '60px' }} />}
                 </tr>
               </thead>
               <tbody>
-                {records.map((r, i) => (
-                  <tr key={r.id} className={`border-b border-gray-800/50 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-white/[0.02]'}`}>
-                    <td className="px-4 py-3 text-white font-medium">{r.modello}</td>
-                    <td className="px-4 py-3 text-gray-300">{r.colore}</td>
-                    <td className="px-4 py-3 font-medium" style={{ color: '#e8a020' }}>{formatEuro(r.prezzo_acquisto)}</td>
-                    <td className="px-4 py-3 text-gray-300">{r.venduto_da}</td>
-                    <td className="px-4 py-3 text-gray-300">{r.dipendente ? fullName(r.dipendente as Parameters<typeof fullName>[0]) : '—'}</td>
-                    <td className="px-4 py-3 text-gray-300">{formatDate(r.data)}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{r.creator ? fullName(r.creator as Parameters<typeof fullName>[0]) : '—'}</td>
+                {records.map(r => (
+                  <tr
+                    key={r.id}
+                    style={{ borderBottom: '0.5px solid #1a1a1a', transition: 'background-color 0.1s' }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#ffffff05')}
+                    onMouseLeave={e => ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent')}
+                  >
+                    <td style={{ padding: '10px 14px', color: '#ffffff', fontWeight: 500 }}>{r.modello}</td>
+                    <td style={{ padding: '10px 14px', color: '#888888' }}>{r.colore}</td>
+                    <td style={{ padding: '10px 14px', color: '#e8a020', fontWeight: 500 }}>{formatEuro(r.prezzo_acquisto)}</td>
+                    <td style={{ padding: '10px 14px', color: '#888888' }}>{r.venduto_da}</td>
+                    <td style={{ padding: '10px 14px', color: '#888888' }}>{r.dipendente ? fullName(r.dipendente as Parameters<typeof fullName>[0]) : '—'}</td>
+                    <td style={{ padding: '10px 14px', color: '#888888' }}>{formatDate(r.data)}</td>
+                    <td style={{ padding: '10px 14px', color: '#555555', fontSize: '12px' }}>{r.creator ? fullName(r.creator as Parameters<typeof fullName>[0]) : '—'}</td>
                     {canEdit && (
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1.5">
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
                           <button
                             onClick={() => openEdit(r)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                            style={{ padding: '5px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff10'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <IconPencil size={13} />
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(r.id)}
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+                            style={{ padding: '5px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <IconTrash size={13} />
                           </button>
                         </div>
                       </td>
@@ -194,54 +275,46 @@ export default function AutoAcquistate() {
 
       {modalOpen && (
         <Modal title={editing ? 'Modifica Acquisto' : 'Registra Acquisto'} onClose={() => setModalOpen(false)}>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Modello *</label>
-                <input
-                  value={form.modello}
-                  onChange={e => setForm(f => ({ ...f, modello: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                  placeholder="es. Audi A4"
-                />
+                <label style={labelStyle}>Modello <span style={{ color: '#e8a020' }}>*</span></label>
+                <input value={form.modello} onChange={e => setForm(f => ({ ...f, modello: e.target.value }))}
+                  style={inputStyle} placeholder="es. Audi A4"
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Colore *</label>
-                <input
-                  value={form.colore}
-                  onChange={e => setForm(f => ({ ...f, colore: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                  placeholder="es. Grigio"
-                />
+                <label style={labelStyle}>Colore <span style={{ color: '#e8a020' }}>*</span></label>
+                <input value={form.colore} onChange={e => setForm(f => ({ ...f, colore: e.target.value }))}
+                  style={inputStyle} placeholder="es. Grigio"
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto ($)</label>
-              <PriceInput
-                value={form.prezzo_acquisto}
-                onChange={v => setForm(f => ({ ...f, prezzo_acquisto: v }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-              />
+              <label style={labelStyle}>Prezzo Acquisto ($)</label>
+              <PriceInput value={form.prezzo_acquisto} onChange={v => setForm(f => ({ ...f, prezzo_acquisto: v }))}
+                style={inputStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Venduto Da (nome/contatto) *</label>
-              <input
-                value={form.venduto_da}
-                onChange={e => setForm(f => ({ ...f, venduto_da: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                placeholder="es. Giuseppe Bianchi"
-              />
+              <label style={labelStyle}>Venduto Da (nome/contatto) <span style={{ color: '#e8a020' }}>*</span></label>
+              <input value={form.venduto_da} onChange={e => setForm(f => ({ ...f, venduto_da: e.target.value }))}
+                style={inputStyle} placeholder="es. Giuseppe Bianchi"
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Dipendente che ha gestito</label>
-              <select
-                value={form.dipendente_id}
-                onChange={e => setForm(f => ({ ...f, dipendente_id: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-              >
+              <label style={labelStyle}>Dipendente che ha gestito</label>
+              <select value={form.dipendente_id} onChange={e => setForm(f => ({ ...f, dipendente_id: e.target.value }))}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                 <option value="">Seleziona dipendente</option>
                 {profiles.map(p => (
                   <option key={p.id} value={p.id}>{fullName(p)} — {p.role}</option>
@@ -250,25 +323,26 @@ export default function AutoAcquistate() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Data</label>
-              <input
-                type="date"
-                value={form.data}
-                onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-              />
+              <label style={labelStyle}>Data</label>
+              <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
+                style={inputStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
 
-            {error && <div className="text-red-400 text-sm">{error}</div>}
+            {error && <div style={{ fontSize: '13px', color: '#f87171' }}>{error}</div>}
 
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5">Annulla</button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 disabled:opacity-50"
-                style={{ backgroundColor: '#e8a020' }}
-              >
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+              <button onClick={() => setModalOpen(false)}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                Annulla
+              </button>
+              <button onClick={handleSave} disabled={saving}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}>
                 {saving ? 'Salvataggio...' : editing ? 'Salva Modifiche' : 'Registra Acquisto'}
               </button>
             </div>
@@ -278,10 +352,20 @@ export default function AutoAcquistate() {
 
       {deleteConfirm && (
         <Modal title="Conferma Eliminazione" onClose={() => setDeleteConfirm(null)}>
-          <p className="text-gray-300 mb-6">Eliminare questo record?</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm">Annulla</button>
-            <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500">Elimina</button>
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>Eliminare questo record?</p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setDeleteConfirm(null)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+              Annulla
+            </button>
+            <button onClick={() => handleDelete(deleteConfirm)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dc2626')}>
+              Elimina
+            </button>
           </div>
         </Modal>
       )}

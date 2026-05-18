@@ -17,9 +17,12 @@ interface PriceInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  style?: React.CSSProperties;
+  onFocus?: React.FocusEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }
 
-export default function PriceInput({ value, onChange, placeholder = '0', className }: PriceInputProps) {
+export default function PriceInput({ value, onChange, placeholder = '0', className, style, onFocus, onBlur }: PriceInputProps) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -28,14 +31,16 @@ export default function PriceInput({ value, onChange, placeholder = '0', classNa
       inputMode="decimal"
       value={focused ? value : formatPrice(value)}
       onChange={e => onChange(e.target.value)}
-      onFocus={() => setFocused(true)}
-      onBlur={() => {
+      onFocus={e => { setFocused(true); onFocus?.(e); }}
+      onBlur={e => {
         setFocused(false);
         const n = parsePrice(value);
         onChange(n ? String(n) : '');
+        onBlur?.(e);
       }}
       placeholder={placeholder}
       className={className}
+      style={style}
     />
   );
 }

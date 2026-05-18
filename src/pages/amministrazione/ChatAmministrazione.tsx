@@ -1,9 +1,38 @@
 import { useEffect, useState, useRef } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { IconSend, IconTrash } from '@tabler/icons-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ChatAdminMessage, fullName } from '../../types';
 import Modal from '../../components/ui/Modal';
+
+function Avatar({ name }: { name: string }) {
+  const initials = name
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div
+      style={{
+        width: '28px',
+        height: '28px',
+        borderRadius: '50%',
+        backgroundColor: '#e8a02015',
+        border: '0.5px solid #e8a02033',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '10px',
+        color: '#e8a020',
+        flexShrink: 0,
+        fontWeight: 500,
+      }}
+    >
+      {initials}
+    </div>
+  );
+}
 
 export default function ChatAmministrazione() {
   const { profile } = useAuth();
@@ -42,46 +71,87 @@ export default function ChatAmministrazione() {
     fetchMessages();
   }
 
-  const formatTime = (d: string) => new Date(d).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const formatTime = (d: string) =>
+    new Date(d).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="p-4 md:p-6 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
-      <div className="mb-6 shrink-0">
-        <h1 className="text-2xl font-bold text-white">Chat Amministrazione</h1>
-        <p className="text-gray-400 text-sm mt-0.5">Chat privata — solo Direzione</p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto rounded-2xl border border-gray-800 p-4 space-y-3 mb-4" style={{ backgroundColor: '#111111' }}>
+    <div
+      style={{
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 52px)',
+        boxSizing: 'border-box',
+        gap: '16px',
+      }}
+    >
+      {/* Messages area */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          padding: '16px',
+          backgroundColor: '#0f0f0f',
+          border: '0.5px solid #1e1e1e',
+          borderRadius: '12px',
+          minHeight: 0,
+        }}
+      >
         {loading ? (
-          <div className="text-center py-10 text-gray-500">Caricamento...</div>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">Nessun messaggio ancora.</div>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#555555', fontSize: '13px' }}>Nessun messaggio ancora.</div>
         ) : (
           messages.map(m => {
             const isMe = m.mittente_id === profile?.id;
+            const senderName = m.mittente ? fullName(m.mittente as Parameters<typeof fullName>[0]) : 'Sconosciuto';
             return (
-              <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+              <div
+                key={m.id}
+                style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}
+              >
+                <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                   {!isMe && (
-                    <span className="text-xs text-gray-500 px-1">
-                      {m.mittente ? fullName(m.mittente as Parameters<typeof fullName>[0]) : 'Sconosciuto'}
-                      {m.mittente && <span className="ml-1" style={{ color: '#e8a020' }}>· {(m.mittente as Parameters<typeof fullName>[0]).role}</span>}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '4px' }}>
+                      <Avatar name={senderName} />
+                      <span style={{ fontSize: '11px', color: '#555555' }}>
+                        {senderName}
+                        {m.mittente && (
+                          <span style={{ color: '#e8a020', marginLeft: '6px' }}>
+                            · {(m.mittente as Parameters<typeof fullName>[0]).role}
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   )}
-                  <div className="flex items-start gap-2">
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                     {isMe && (
-                      <button onClick={() => setDeleteConfirm(m.id)} className="p-1 rounded text-gray-700 hover:text-red-400 transition-colors shrink-0 mt-1">
-                        <Trash2 className="w-3 h-3" />
+                      <button
+                        onClick={() => setDeleteConfirm(m.id)}
+                        style={{ padding: '4px', borderRadius: '4px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#444444', marginTop: '4px', flexShrink: 0 }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+                        onMouseLeave={e => (e.currentTarget.style.color = '#444444')}
+                      >
+                        <IconTrash size={12} />
                       </button>
                     )}
                     <div
-                      className={`rounded-2xl px-4 py-2.5 text-sm ${isMe ? 'rounded-br-sm text-black' : 'rounded-bl-sm text-white border border-gray-700'}`}
-                      style={isMe ? { backgroundColor: '#e8a020' } : { backgroundColor: '#1a1a1a' }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: isMe ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                        fontSize: '13px',
+                        ...(isMe
+                          ? { backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', color: '#ffffff' }
+                          : { backgroundColor: '#0f0f0f', border: '0.5px solid #1e1e1e', color: '#ffffff' }),
+                      }}
                     >
                       {m.messaggio}
                     </div>
                   </div>
-                  <span className="text-xs text-gray-600 px-1">{formatTime(m.created_at)}</span>
+                  <span style={{ fontSize: '11px', color: '#444444', padding: '0 4px' }}>{formatTime(m.created_at)}</span>
                 </div>
               </div>
             );
@@ -90,30 +160,63 @@ export default function ChatAmministrazione() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-3 shrink-0">
+      {/* Input area */}
+      <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
         <input
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
           placeholder="Scrivi un messaggio privato..."
-          className="flex-1 px-4 py-3 rounded-xl bg-gray-900 border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-yellow-500 transition-colors"
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#0a0a0a',
+            border: '0.5px solid #2a2a2a',
+            color: '#ffffff',
+            fontSize: '13px',
+            outline: 'none',
+          }}
+          onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+          onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
         />
         <button
           onClick={handleSend}
           disabled={sending || !text.trim()}
-          className="px-4 py-3 rounded-xl font-semibold text-black hover:brightness-110 disabled:opacity-50 transition-all"
-          style={{ backgroundColor: '#e8a020' }}
+          style={{
+            padding: '10px 16px',
+            borderRadius: '8px',
+            backgroundColor: '#e8a020',
+            border: 'none',
+            cursor: sending || !text.trim() ? 'not-allowed' : 'pointer',
+            opacity: sending || !text.trim() ? 0.5 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onMouseEnter={e => { if (!sending && text.trim()) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+          onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}
         >
-          <Send className="w-4 h-4" />
+          <IconSend size={16} style={{ color: '#000000' }} />
         </button>
       </div>
 
       {deleteConfirm && (
         <Modal title="Elimina Messaggio" onClose={() => setDeleteConfirm(null)}>
-          <p className="text-gray-300 mb-6">Eliminare questo messaggio?</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm">Annulla</button>
-            <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500">Elimina</button>
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>Eliminare questo messaggio?</p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setDeleteConfirm(null)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+              Annulla
+            </button>
+            <button onClick={() => handleDelete(deleteConfirm)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dc2626')}>
+              Elimina
+            </button>
           </div>
         </Modal>
       )}

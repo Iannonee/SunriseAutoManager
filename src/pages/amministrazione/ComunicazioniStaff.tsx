@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { ComunicazioneStaff, ComunicazioneStaffTipo, Profile, ROLES, canWriteComunicazioniStaff, fullName } from '../../types';
@@ -7,13 +7,35 @@ import Modal from '../../components/ui/Modal';
 
 const TIPI: ComunicazioneStaffTipo[] = ['Promozione', 'Retrocessione', 'Richiamo Verbale', 'Richiamo Ufficiale', 'Retrocessione Disciplinare', 'Espulsione'];
 
-const tipoStyle: Record<ComunicazioneStaffTipo, { bg: string; text: string }> = {
-  Promozione: { bg: 'bg-green-900/30 border border-green-700/40', text: 'text-green-400' },
-  Retrocessione: { bg: 'bg-orange-900/30 border border-orange-700/40', text: 'text-orange-400' },
-  'Richiamo Verbale': { bg: 'bg-yellow-900/30 border border-yellow-700/40', text: 'text-yellow-400' },
-  'Richiamo Ufficiale': { bg: 'bg-orange-900/30 border border-orange-700/40', text: 'text-orange-500' },
-  'Retrocessione Disciplinare': { bg: 'bg-red-900/30 border border-red-700/40', text: 'text-red-400' },
-  Espulsione: { bg: 'bg-red-900/50 border border-red-600/60', text: 'text-red-300' },
+const tipoStyle: Record<ComunicazioneStaffTipo, { bg: string; color: string; border: string }> = {
+  Promozione: { bg: 'rgba(76,175,80,0.1)', color: '#4caf50', border: 'rgba(76,175,80,0.3)' },
+  Retrocessione: { bg: 'rgba(255,140,0,0.1)', color: '#ff8c00', border: 'rgba(255,140,0,0.3)' },
+  'Richiamo Verbale': { bg: 'rgba(232,160,32,0.1)', color: '#e8a020', border: 'rgba(232,160,32,0.3)' },
+  'Richiamo Ufficiale': { bg: 'rgba(255,140,0,0.15)', color: '#ff8c00', border: 'rgba(255,140,0,0.4)' },
+  'Retrocessione Disciplinare': { bg: 'rgba(239,68,68,0.1)', color: '#f87171', border: 'rgba(239,68,68,0.3)' },
+  Espulsione: { bg: 'rgba(239,68,68,0.2)', color: '#ef4444', border: 'rgba(239,68,68,0.5)' },
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '10px',
+  fontWeight: 500,
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  borderRadius: '8px',
+  backgroundColor: '#0a0a0a',
+  border: '0.5px solid #2a2a2a',
+  color: '#ffffff',
+  fontSize: '13px',
+  outline: 'none',
+  boxSizing: 'border-box',
 };
 
 export default function ComunicazioniStaff() {
@@ -79,60 +101,85 @@ export default function ComunicazioniStaff() {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Comunicazioni Staff</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Bacheca ufficiale della direzione</p>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>Comunicazioni Staff</span>
+          <span style={{ fontSize: '11px', color: '#e8a020', backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', borderRadius: '6px', padding: '2px 8px' }}>
+            {records.length} comunicazioni
+          </span>
         </div>
         {canWrite && (
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 transition-all" style={{ backgroundColor: '#e8a020' }}>
-            <Plus className="w-4 h-4" />
+          <button
+            onClick={openCreate}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+            onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+          >
+            <IconPlus size={15} />
             Nuova Comunicazione
           </button>
         )}
       </div>
 
       {!canWrite && (
-        <div className="rounded-xl border border-gray-700 px-4 py-3 text-sm text-gray-400" style={{ backgroundColor: '#111111' }}>
-          Solo la direzione puo pubblicare comunicazioni. Tu puoi solo consultare.
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#888888' }}>
+          Solo la direzione può pubblicare comunicazioni. Tu puoi solo consultare.
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Caricamento...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
       ) : records.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">Nessuna comunicazione registrata.</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Nessuna comunicazione registrata.</div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {records.map(r => {
             const style = tipoStyle[r.tipo];
             return (
-              <div key={r.id} className="rounded-2xl border border-gray-800 p-5" style={{ backgroundColor: '#111111' }}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 flex-wrap mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>{r.tipo}</span>
-                      <span className="text-white font-semibold">
+              <div
+                key={r.id}
+                style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #1e1e1e', borderRadius: '12px', padding: '16px 20px' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                      {/* Type badge */}
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        color: style.color,
+                        backgroundColor: style.bg,
+                        border: `0.5px solid ${style.border}`,
+                        borderRadius: '6px',
+                        padding: '3px 10px',
+                      }}>
+                        {r.tipo}
+                      </span>
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>
                         {r.dipendente ? fullName(r.dipendente as Parameters<typeof fullName>[0]) : '—'}
                       </span>
                       {r.da_ruolo && r.a_ruolo && (
-                        <span className="text-xs text-gray-400">
-                          <span className="text-gray-500">{r.da_ruolo}</span>
-                          <span className="mx-1.5">→</span>
+                        <span style={{ fontSize: '12px', color: '#888888' }}>
+                          <span style={{ color: '#555555' }}>{r.da_ruolo}</span>
+                          <span style={{ margin: '0 6px' }}>→</span>
                           <span style={{ color: '#e8a020' }}>{r.a_ruolo}</span>
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-300 text-sm">{r.motivazione}</p>
-                    <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                    <p style={{ fontSize: '13px', color: '#888888', marginBottom: '8px' }}>{r.motivazione}</p>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#444444' }}>
                       <span>{formatDate(r.data)}</span>
                       {r.creator && <span>Da: {fullName(r.creator as Parameters<typeof fullName>[0])}</span>}
                     </div>
                   </div>
                   {canWrite && (
-                    <button onClick={() => setDeleteConfirm(r.id)} className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/20 transition-colors shrink-0">
-                      <Trash2 className="w-3.5 h-3.5" />
+                    <button onClick={() => setDeleteConfirm(r.id)}
+                      style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555', flexShrink: 0 }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                      <IconTrash size={14} />
                     </button>
                   )}
                 </div>
@@ -144,36 +191,44 @@ export default function ComunicazioniStaff() {
 
       {modalOpen && (
         <Modal title="Nuova Comunicazione" onClose={() => setModalOpen(false)}>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Tipo</label>
+              <label style={labelStyle}>Tipo</label>
               <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value as ComunicazioneStaffTipo }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500">
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                 {TIPI.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Dipendente *</label>
+              <label style={labelStyle}>Dipendente <span style={{ color: '#e8a020' }}>*</span></label>
               <select value={form.dipendente_id} onChange={e => setForm(f => ({ ...f, dipendente_id: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500">
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                 <option value="">Seleziona dipendente</option>
                 {profiles.map(p => <option key={p.id} value={p.id}>{fullName(p)} — {p.role}</option>)}
               </select>
             </div>
             {(form.tipo === 'Promozione' || form.tipo === 'Retrocessione') && (
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">Da Ruolo</label>
+                  <label style={labelStyle}>Da Ruolo</label>
                   <select value={form.da_ruolo} onChange={e => setForm(f => ({ ...f, da_ruolo: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500">
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                    onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                     <option value="">Seleziona</option>
                     {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1.5">A Ruolo</label>
+                  <label style={labelStyle}>A Ruolo</label>
                   <select value={form.a_ruolo} onChange={e => setForm(f => ({ ...f, a_ruolo: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500">
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                    onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                     <option value="">Seleziona</option>
                     {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
@@ -181,20 +236,31 @@ export default function ComunicazioniStaff() {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Data</label>
+              <label style={labelStyle}>Data</label>
               <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
+                style={inputStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Motivazione *</label>
+              <label style={labelStyle}>Motivazione <span style={{ color: '#e8a020' }}>*</span></label>
               <textarea value={form.motivazione} onChange={e => setForm(f => ({ ...f, motivazione: e.target.value }))} rows={4}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500 resize-none"
-                placeholder="Motivazione della comunicazione..." />
+                style={{ ...inputStyle, resize: 'none' }} placeholder="Motivazione della comunicazione..."
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
-            {error && <div className="text-red-400 text-sm">{error}</div>}
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5">Annulla</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 disabled:opacity-50" style={{ backgroundColor: '#e8a020' }}>
+            {error && <div style={{ fontSize: '13px', color: '#f87171' }}>{error}</div>}
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+              <button onClick={() => setModalOpen(false)}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                Annulla
+              </button>
+              <button onClick={handleSave} disabled={saving}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}>
                 {saving ? 'Invio...' : 'Pubblica'}
               </button>
             </div>
@@ -204,10 +270,20 @@ export default function ComunicazioniStaff() {
 
       {deleteConfirm && (
         <Modal title="Conferma Eliminazione" onClose={() => setDeleteConfirm(null)}>
-          <p className="text-gray-300 mb-6">Eliminare questa comunicazione?</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm">Annulla</button>
-            <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500">Elimina</button>
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>Eliminare questa comunicazione?</p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setDeleteConfirm(null)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+              Annulla
+            </button>
+            <button onClick={() => handleDelete(deleteConfirm)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dc2626')}>
+              Elimina
+            </button>
           </div>
         </Modal>
       )}

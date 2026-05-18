@@ -1,5 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
-import { Plus, Pencil, Trash2, Search, Image, ChevronDown, Upload, X } from 'lucide-react';
+import {
+  IconPlus,
+  IconPencil,
+  IconTrash,
+  IconSearch,
+  IconCar,
+  IconUpload,
+  IconX,
+} from '@tabler/icons-react';
 import PriceInput, { parsePrice } from '../../components/ui/PriceInput';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,11 +17,11 @@ import StarRating from '../../components/ui/StarRating';
 
 const STATI: VeicoloStato[] = ['Da completare', 'Disponibile', 'In Trattativa', 'Venduto'];
 
-const statoBadge: Record<VeicoloStato, { bg: string; text: string }> = {
-  'Da completare': { bg: 'bg-orange-500/20 border border-orange-500/40', text: 'text-orange-400' },
-  Disponibile: { bg: 'bg-green-500/20 border border-green-500/40', text: 'text-green-400' },
-  'In Trattativa': { bg: 'bg-blue-500/20 border border-blue-500/40', text: 'text-blue-400' },
-  Venduto: { bg: 'bg-gray-500/20 border border-gray-500/40', text: 'text-gray-400' },
+const statoBadge: Record<VeicoloStato, { bg: string; color: string }> = {
+  'Da completare': { bg: 'rgba(255,140,0,0.15)', color: '#ff8c00' },
+  Disponibile: { bg: 'rgba(76,175,80,0.15)', color: '#4caf50' },
+  'In Trattativa': { bg: 'rgba(121,134,203,0.15)', color: '#7986cb' },
+  Venduto: { bg: 'rgba(136,136,136,0.15)', color: '#888888' },
 };
 
 const emptyForm = {
@@ -27,6 +35,28 @@ const emptyForm = {
   foto_url: '',
   stato: 'Disponibile' as VeicoloStato,
   note: '',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '10px',
+  fontWeight: 500,
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  borderRadius: '8px',
+  backgroundColor: '#0a0a0a',
+  border: '0.5px solid #2a2a2a',
+  color: '#ffffff',
+  fontSize: '13px',
+  outline: 'none',
+  boxSizing: 'border-box',
 };
 
 export default function Inventario() {
@@ -183,230 +213,366 @@ export default function Inventario() {
     return matchSearch && matchStato;
   });
 
-  const formatEuro = (n: number | null) => n != null ? `$ ${n.toLocaleString('it-IT', { minimumFractionDigits: 0 })}` : '—';
+  const formatEuro = (n: number | null) =>
+    n != null ? `$ ${n.toLocaleString('it-IT', { minimumFractionDigits: 0 })}` : '—';
+
+  const counts = {
+    disponibili: veicoli.filter(v => v.stato === 'Disponibile').length,
+    trattativa: veicoli.filter(v => v.stato === 'In Trattativa').length,
+    daCompletare: veicoli.filter(v => v.stato === 'Da completare').length,
+    venduti: veicoli.filter(v => v.stato === 'Venduto').length,
+  };
+
+  const metricCards = [
+    { label: 'Disponibili', value: counts.disponibili, color: '#4caf50' },
+    { label: 'In Trattativa', value: counts.trattativa, color: '#e8a020' },
+    { label: 'Da Completare', value: counts.daCompletare, color: '#ff8c00' },
+    { label: 'Venduti', value: counts.venduti, color: '#7986cb' },
+  ];
+
+  const filterPills: Array<VeicoloStato | 'Tutti'> = ['Tutti', ...STATI];
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Inventario</h1>
-          <p className="text-gray-400 text-sm mt-0.5">{veicoli.length} veicoli totali</p>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>Inventario</span>
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#e8a020',
+              backgroundColor: '#e8a02015',
+              border: '0.5px solid #e8a02033',
+              borderRadius: '6px',
+              padding: '2px 8px',
+            }}
+          >
+            {veicoli.length} veicoli
+          </span>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 transition-all"
-          style={{ backgroundColor: '#e8a020' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#e8a020',
+            color: '#000000',
+            fontSize: '13px',
+            fontWeight: 500,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+          onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
         >
-          <Plus className="w-4 h-4" />
+          <IconPlus size={15} />
           Aggiungi Veicolo
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+      {/* Metric cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+        {metricCards.map(m => (
+          <div
+            key={m.label}
+            style={{
+              backgroundColor: '#0f0f0f',
+              border: '0.5px solid #e8a02033',
+              borderRadius: '8px',
+              padding: '12px 16px',
+            }}
+          >
+            <div style={{ fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
+              {m.label}
+            </div>
+            <div style={{ fontSize: '22px', fontWeight: 500, color: m.color }}>
+              {m.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + filter pills */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ position: 'relative' }}>
+          <IconSearch size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#555555' }} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cerca per modello o colore..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-sm"
+            style={{
+              ...inputStyle,
+              paddingLeft: '32px',
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+            onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
           />
         </div>
-        <div className="relative">
-          <select
-            value={statoFilter}
-            onChange={e => setStatoFilter(e.target.value as VeicoloStato | 'Tutti')}
-            className="appearance-none pl-4 pr-10 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500 cursor-pointer"
-          >
-            <option value="Tutti">Tutti gli stati</option>
-            {STATI.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {filterPills.map(pill => {
+            const active = statoFilter === pill;
+            return (
+              <button
+                key={pill}
+                onClick={() => setStatoFilter(pill)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  backgroundColor: active ? '#e8a02015' : 'transparent',
+                  border: `0.5px solid ${active ? '#e8a02033' : '#1e1e1e'}`,
+                  color: active ? '#e8a020' : '#555555',
+                }}
+              >
+                {pill}
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      {/* Grid */}
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Caricamento...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">Nessun veicolo trovato.</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Nessun veicolo trovato.</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map(v => (
-            <div
-              key={v.id}
-              className="rounded-2xl border border-gray-800 overflow-hidden transition-all hover:border-gray-700"
-              style={{ backgroundColor: '#111111' }}
-            >
-              {/* Photo */}
-              <div className="h-44 bg-gray-900 flex items-center justify-center overflow-hidden relative">
-                {v.foto_url ? (
-                  <img src={v.foto_url} alt={v.modello} className="w-full h-full object-cover" />
-                ) : (
-                  <Image className="w-12 h-12 text-gray-700" />
-                )}
-                {v.stato === 'Da completare' && (
-                  <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500 text-white animate-pulse">
-                    Da completare
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold text-white text-base leading-tight">{v.modello}</h3>
-                    <p className="text-gray-400 text-sm">{v.colore}</p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statoBadge[v.stato].bg} ${statoBadge[v.stato].text}`}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+          {filtered.map(v => {
+            const badge = statoBadge[v.stato];
+            return (
+              <div
+                key={v.id}
+                style={{
+                  backgroundColor: '#0f0f0f',
+                  border: '0.5px solid #1e1e1e',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.borderColor = '#e8a02044')}
+                onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.borderColor = '#1e1e1e')}
+              >
+                {/* Photo area */}
+                <div
+                  style={{
+                    height: '160px',
+                    backgroundColor: '#141414',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {v.foto_url ? (
+                    <img src={v.foto_url} alt={v.modello} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <IconCar size={40} style={{ color: '#333333' }} />
+                  )}
+                  {/* Status badge */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      backgroundColor: badge.bg,
+                      color: badge.color,
+                      border: `0.5px solid ${badge.color}44`,
+                    }}
+                  >
                     {v.stato}
                   </span>
                 </div>
 
-                <StarRating value={v.condizioni} readonly />
-
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: '#0a0a0a' }}>
-                    <p className="text-gray-500 text-xs mb-0.5">Acquisto</p>
-                    <p className="text-white font-medium">{formatEuro(v.prezzo_acquisto)}</p>
+                {/* Body */}
+                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>{v.modello}</div>
+                    <div style={{ fontSize: '12px', color: '#888888', marginTop: '2px' }}>{v.colore}</div>
                   </div>
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: '#0a0a0a' }}>
-                    <p className="text-gray-500 text-xs mb-0.5">Vendita</p>
-                    <p className="font-medium" style={{ color: v.prezzo_vendita ? '#e8a020' : '#6b7280' }}>
-                      {formatEuro(v.prezzo_vendita)}
-                      {v.prezzo_vendita && v.trattabile && <span className="text-xs text-gray-500 ml-1">tratt.</span>}
-                    </p>
+
+                  <StarRating value={v.condizioni} readonly />
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div style={{ backgroundColor: '#0a0a0a', borderRadius: '6px', padding: '8px 10px' }}>
+                      <div style={{ fontSize: '10px', color: '#555555', marginBottom: '3px' }}>Acquisto</div>
+                      <div style={{ fontSize: '13px', color: '#ffffff', fontWeight: 500 }}>{formatEuro(v.prezzo_acquisto)}</div>
+                    </div>
+                    <div style={{ backgroundColor: '#0a0a0a', borderRadius: '6px', padding: '8px 10px' }}>
+                      <div style={{ fontSize: '10px', color: '#555555', marginBottom: '3px' }}>Vendita</div>
+                      <div style={{ fontSize: '13px', color: v.prezzo_vendita ? '#e8a020' : '#555555', fontWeight: 500 }}>
+                        {formatEuro(v.prezzo_vendita)}
+                        {v.prezzo_vendita && v.trattabile && (
+                          <span style={{ fontSize: '10px', color: '#555555', marginLeft: '4px' }}>tratt.</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {v.modifiche && (
-                  <p className="text-xs text-gray-500 line-clamp-2">{v.modifiche}</p>
-                )}
+                  {v.modifiche && (
+                    <div style={{ fontSize: '12px', color: '#555555', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      {v.modifiche}
+                    </div>
+                  )}
 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-800">
-                  <p className="text-xs text-gray-600">
-                    {v.profile ? fullName(v.profile as Parameters<typeof fullName>[0]) : ''}
-                  </p>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => openEdit(v)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    {isAdmin(profile?.role) && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '0.5px solid #1e1e1e' }}>
+                    <span style={{ fontSize: '11px', color: '#555555' }}>
+                      {v.profile ? fullName(v.profile as Parameters<typeof fullName>[0]) : ''}
+                    </span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
                       <button
-                        onClick={() => setDeleteConfirm(v.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+                        onClick={() => openEdit(v)}
+                        style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff10'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <IconPencil size={14} />
                       </button>
-                    )}
+                      {isAdmin(profile?.role) && (
+                        <button
+                          onClick={() => setDeleteConfirm(v.id)}
+                          style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}
+                        >
+                          <IconTrash size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* Create/Edit Modal */}
       {modalOpen && (
         <Modal title={editing ? 'Modifica Veicolo' : 'Nuovo Veicolo'} onClose={() => setModalOpen(false)} wide>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Modello *</label>
+                <label style={labelStyle}>Modello <span style={{ color: '#e8a020' }}>*</span></label>
                 <input
                   value={form.modello}
                   onChange={e => setForm(f => ({ ...f, modello: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
+                  style={inputStyle}
                   placeholder="es. BMW Serie 3"
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Colore *</label>
+                <label style={labelStyle}>Colore <span style={{ color: '#e8a020' }}>*</span></label>
                 <input
                   value={form.colore}
                   onChange={e => setForm(f => ({ ...f, colore: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
+                  style={inputStyle}
                   placeholder="es. Nero Metallizzato"
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Condizioni</label>
+              <label style={labelStyle}>Condizioni</label>
               <StarRating value={form.condizioni} onChange={v => setForm(f => ({ ...f, condizioni: v }))} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto ($)</label>
+                <label style={labelStyle}>Prezzo Acquisto ($)</label>
                 <PriceInput
                   value={form.prezzo_acquisto}
                   onChange={v => setForm(f => ({ ...f, prezzo_acquisto: v }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
+                  className=""
+                  style={inputStyle}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Vendita ($)</label>
+                <label style={labelStyle}>Prezzo Vendita ($)</label>
                 <PriceInput
                   value={form.prezzo_vendita}
                   onChange={v => setForm(f => ({ ...f, prezzo_vendita: v }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
+                  className=""
+                  style={inputStyle}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Stato</label>
+                <label style={labelStyle}>Stato</label>
                 <select
                   value={form.stato}
                   onChange={e => setForm(f => ({ ...f, stato: e.target.value as VeicoloStato }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
                 >
                   {STATI.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <div className="flex items-center gap-3 pt-6">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '22px' }}>
                 <input
                   type="checkbox"
                   id="trattabile"
                   checked={form.trattabile}
                   onChange={e => setForm(f => ({ ...f, trattabile: e.target.checked }))}
-                  className="w-4 h-4 accent-yellow-500"
+                  style={{ width: '14px', height: '14px', accentColor: '#e8a020' }}
                 />
-                <label htmlFor="trattabile" className="text-sm font-medium text-gray-300">Prezzo Trattabile</label>
+                <label htmlFor="trattabile" style={{ fontSize: '13px', color: '#888888', cursor: 'pointer' }}>Prezzo Trattabile</label>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Foto Veicolo</label>
+              <label style={labelStyle}>Foto Veicolo</label>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
+                style={{ display: 'none' }}
                 onChange={handleFileSelect}
               />
               {fotoPreview ? (
-                <div className="relative rounded-xl overflow-hidden h-40 bg-gray-900">
-                  <img src={fotoPreview} alt="preview" className="w-full h-full object-cover" />
+                <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '160px', backgroundColor: '#141414' }}>
+                  <img src={fotoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button
                     type="button"
                     onClick={clearFoto}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                    style={{
+                      position: 'absolute', top: '8px', right: '8px',
+                      padding: '4px', borderRadius: '50%',
+                      backgroundColor: 'rgba(0,0,0,0.6)', border: 'none',
+                      cursor: 'pointer', color: '#ffffff', display: 'flex', alignItems: 'center',
+                    }}
                   >
-                    <X className="w-4 h-4" />
+                    <IconX size={14} />
                   </button>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs hover:bg-black/80 transition-colors"
+                    style={{
+                      position: 'absolute', bottom: '8px', right: '8px',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      padding: '5px 10px', borderRadius: '6px',
+                      backgroundColor: 'rgba(0,0,0,0.6)', border: 'none',
+                      cursor: 'pointer', color: '#ffffff', fontSize: '12px',
+                    }}
                   >
-                    <Upload className="w-3.5 h-3.5" />
+                    <IconUpload size={12} />
                     Cambia
                   </button>
                 </div>
@@ -414,51 +580,66 @@ export default function Inventario() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-32 rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-gray-500 hover:text-gray-400 transition-colors"
+                  style={{
+                    width: '100%', height: '120px',
+                    borderRadius: '8px', border: '0.5px dashed #2a2a2a',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    backgroundColor: 'transparent', cursor: 'pointer', color: '#555555',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#555555'; (e.currentTarget as HTMLButtonElement).style.color = '#888888'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#2a2a2a'; (e.currentTarget as HTMLButtonElement).style.color = '#555555'; }}
                 >
-                  <Upload className="w-6 h-6" />
-                  <span className="text-sm">Clicca per caricare una foto</span>
-                  <span className="text-xs">JPG, PNG, WEBP fino a 5MB</span>
+                  <IconUpload size={20} />
+                  <span style={{ fontSize: '12px' }}>Clicca per caricare una foto</span>
+                  <span style={{ fontSize: '11px', color: '#444444' }}>JPG, PNG, WEBP fino a 5MB</span>
                 </button>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Modifiche e Ritocchi</label>
+              <label style={labelStyle}>Modifiche e Ritocchi</label>
               <textarea
                 value={form.modifiche}
                 onChange={e => setForm(f => ({ ...f, modifiche: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500 resize-none"
+                style={{ ...inputStyle, resize: 'none' }}
                 placeholder="Descrivi le modifiche effettuate..."
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Note</label>
+              <label style={labelStyle}>Note</label>
               <textarea
                 value={form.note}
                 onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
                 rows={2}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500 resize-none"
+                style={{ ...inputStyle, resize: 'none' }}
                 placeholder="Note aggiuntive..."
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
               />
             </div>
 
-            {error && <div className="text-red-400 text-sm">{error}</div>}
+            {error && <div style={{ fontSize: '13px', color: '#f87171' }}>{error}</div>}
 
-            <div className="flex gap-3 pt-2">
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
               <button
                 onClick={() => setModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5 transition-colors"
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 Annulla
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 disabled:opacity-50 transition-all"
-                style={{ backgroundColor: '#e8a020' }}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}
               >
                 {saving ? 'Salvataggio...' : editing ? 'Salva Modifiche' : 'Aggiungi'}
               </button>
@@ -470,17 +651,23 @@ export default function Inventario() {
       {/* Delete confirm */}
       {deleteConfirm && (
         <Modal title="Conferma Eliminazione" onClose={() => setDeleteConfirm(null)}>
-          <p className="text-gray-300 mb-6">Sei sicuro di voler eliminare questo veicolo? L'operazione non è reversibile.</p>
-          <div className="flex gap-3">
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>
+            Sei sicuro di voler eliminare questo veicolo? L'operazione non è reversibile.
+          </p>
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => setDeleteConfirm(null)}
-              className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5"
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               Annulla
             </button>
             <button
               onClick={() => handleDelete(deleteConfirm)}
-              className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-colors"
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dc2626')}
             >
               Elimina
             </button>

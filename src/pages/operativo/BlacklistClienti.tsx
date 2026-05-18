@@ -1,14 +1,35 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { IconPlus, IconPencil, IconTrash, IconSearch } from '@tabler/icons-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { BlacklistCliente, Profile, canManageBlacklist, canEditBlacklist, fullName } from '../../types';
 import Modal from '../../components/ui/Modal';
 
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '10px',
+  fontWeight: 500,
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  borderRadius: '8px',
+  backgroundColor: '#0a0a0a',
+  border: '0.5px solid #2a2a2a',
+  color: '#ffffff',
+  fontSize: '13px',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
 export default function BlacklistClienti() {
   const { profile } = useAuth();
   const [records, setRecords] = useState<BlacklistCliente[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,12 +46,10 @@ export default function BlacklistClienti() {
 
   async function fetchAll() {
     setLoading(true);
-    const [rec, prof] = await Promise.all([
+    const [rec] = await Promise.all([
       supabase.from('blacklist_clienti').select('*, aggiunto_da:profiles!aggiunto_da_id(*)').order('created_at', { ascending: false }),
-      supabase.from('profiles').select('*').eq('is_active', true).order('cognome'),
     ]);
     setRecords(rec.data || []);
-    setProfiles(prof.data || []);
     setLoading(false);
   }
 
@@ -72,66 +91,108 @@ export default function BlacklistClienti() {
     fetchAll();
   }
 
-  const filtered = records.filter(r => r.nome_cliente.toLowerCase().includes(search.toLowerCase()) || r.motivo.toLowerCase().includes(search.toLowerCase()));
+  const filtered = records.filter(r =>
+    r.nome_cliente.toLowerCase().includes(search.toLowerCase()) ||
+    r.motivo.toLowerCase().includes(search.toLowerCase())
+  );
   const formatDate = (d: string) => new Date(d).toLocaleDateString('it-IT');
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Blacklist Clienti</h1>
-          <p className="text-gray-400 text-sm mt-0.5">{records.length} clienti in blacklist</p>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>Blacklist Clienti</span>
+          <span style={{ fontSize: '11px', color: '#e8a020', backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', borderRadius: '6px', padding: '2px 8px' }}>
+            {records.length} clienti
+          </span>
         </div>
         {canAdd && (
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 transition-all" style={{ backgroundColor: '#e8a020' }}>
-            <Plus className="w-4 h-4" />
+          <button
+            onClick={openCreate}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+            onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+          >
+            <IconPlus size={15} />
             Aggiungi Cliente
           </button>
         )}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+      {/* Search */}
+      <div style={{ position: 'relative' }}>
+        <IconSearch size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#555555' }} />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Cerca per nome o motivo..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-sm"
+          style={{ ...inputStyle, paddingLeft: '32px' }}
+          onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+          onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}
         />
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Caricamento...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">Nessun cliente trovato.</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Nessun cliente trovato.</div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {filtered.map(r => (
-            <div key={r.id} className="rounded-2xl border border-gray-800 p-4" style={{ backgroundColor: '#111111' }}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="font-semibold text-white">{r.nome_cliente}</h3>
-                    <span className="px-2 py-0.5 rounded-full text-xs bg-red-900/30 border border-red-700/40 text-red-400">Blacklist</span>
-                  </div>
-                  <p className="text-sm text-gray-400 mt-1">{r.motivo}</p>
-                  {r.note && <p className="text-xs text-gray-500 mt-1">{r.note}</p>}
-                  <div className="flex gap-4 mt-2 text-xs text-gray-600">
-                    <span>{formatDate(r.data)}</span>
-                    {r.aggiunto_da && <span>Aggiunto da: {fullName(r.aggiunto_da as Parameters<typeof fullName>[0])}</span>}
-                  </div>
+            <div
+              key={r.id}
+              style={{
+                backgroundColor: '#0f0f0f',
+                border: '0.5px solid #1e1e1e',
+                borderRadius: '12px',
+                padding: '16px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: '16px',
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#ffffff' }}>{r.nome_cliente}</span>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: '#f87171',
+                    backgroundColor: 'rgba(239,68,68,0.1)',
+                    border: '0.5px solid rgba(239,68,68,0.3)',
+                    borderRadius: '6px',
+                    padding: '2px 8px',
+                  }}>
+                    Blacklist
+                  </span>
                 </div>
-                {canEdit && (
-                  <div className="flex gap-1.5 shrink-0">
-                    <button onClick={() => openEdit(r)} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => setDeleteConfirm(r.id)} className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/20 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
+                <p style={{ fontSize: '13px', color: '#888888', marginBottom: '4px' }}>{r.motivo}</p>
+                {r.note && <p style={{ fontSize: '12px', color: '#555555', marginBottom: '6px' }}>{r.note}</p>}
+                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#444444' }}>
+                  <span>{formatDate(r.data)}</span>
+                  {r.aggiunto_da && (
+                    <span>Aggiunto da: {fullName(r.aggiunto_da as Parameters<typeof fullName>[0])}</span>
+                  )}
+                </div>
               </div>
+              {canEdit && (
+                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                  <button onClick={() => openEdit(r)}
+                    style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff10'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                    <IconPencil size={14} />
+                  </button>
+                  <button onClick={() => setDeleteConfirm(r.id)}
+                    style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#f87171'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                    <IconTrash size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -139,34 +200,47 @@ export default function BlacklistClienti() {
 
       {modalOpen && (
         <Modal title={editing ? 'Modifica Record' : 'Aggiungi alla Blacklist'} onClose={() => setModalOpen(false)}>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome Cliente *</label>
+              <label style={labelStyle}>Nome Cliente <span style={{ color: '#e8a020' }}>*</span></label>
               <input value={form.nome_cliente} onChange={e => setForm(f => ({ ...f, nome_cliente: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                placeholder="Nome e Cognome" />
+                style={inputStyle} placeholder="Nome e Cognome"
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Data</label>
+              <label style={labelStyle}>Data</label>
               <input type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
+                style={inputStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Motivo *</label>
+              <label style={labelStyle}>Motivo <span style={{ color: '#e8a020' }}>*</span></label>
               <textarea value={form.motivo} onChange={e => setForm(f => ({ ...f, motivo: e.target.value }))} rows={3}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500 resize-none"
-                placeholder="Motivo dell'inserimento in blacklist..." />
+                style={{ ...inputStyle, resize: 'none' }} placeholder="Motivo dell'inserimento in blacklist..."
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Note</label>
+              <label style={labelStyle}>Note</label>
               <textarea value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} rows={2}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500 resize-none"
-                placeholder="Note aggiuntive..." />
+                style={{ ...inputStyle, resize: 'none' }} placeholder="Note aggiuntive..."
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')} />
             </div>
-            {error && <div className="text-red-400 text-sm">{error}</div>}
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5">Annulla</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 disabled:opacity-50" style={{ backgroundColor: '#e8a020' }}>
+            {error && <div style={{ fontSize: '13px', color: '#f87171' }}>{error}</div>}
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+              <button onClick={() => setModalOpen(false)}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                Annulla
+              </button>
+              <button onClick={handleSave} disabled={saving}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}>
                 {saving ? 'Salvataggio...' : editing ? 'Salva' : 'Aggiungi'}
               </button>
             </div>
@@ -176,10 +250,20 @@ export default function BlacklistClienti() {
 
       {deleteConfirm && (
         <Modal title="Conferma Eliminazione" onClose={() => setDeleteConfirm(null)}>
-          <p className="text-gray-300 mb-6">Rimuovere questo cliente dalla blacklist?</p>
-          <div className="flex gap-3">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm">Annulla</button>
-            <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-500">Rimuovi</button>
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>Rimuovere questo cliente dalla blacklist?</p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setDeleteConfirm(null)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+              Annulla
+            </button>
+            <button onClick={() => handleDelete(deleteConfirm)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#dc2626')}>
+              Rimuovi
+            </button>
           </div>
         </Modal>
       )}

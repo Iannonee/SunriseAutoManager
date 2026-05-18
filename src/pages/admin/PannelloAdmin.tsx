@@ -1,8 +1,79 @@
 import { useEffect, useState } from 'react';
-import { Pencil, UserX, UserCheck, Shield } from 'lucide-react';
+import { IconPencil, IconUserOff, IconUserCheck } from '@tabler/icons-react';
 import { supabase } from '../../lib/supabase';
 import { Profile, UserRole, ROLES, fullName, isAdmin } from '../../types';
 import Modal from '../../components/ui/Modal';
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '10px',
+  fontWeight: 500,
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  marginBottom: '6px',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  borderRadius: '8px',
+  backgroundColor: '#0a0a0a',
+  border: '0.5px solid #2a2a2a',
+  color: '#ffffff',
+  fontSize: '13px',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const thStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '10px 14px',
+  fontSize: '10px',
+  color: '#555555',
+  textTransform: 'uppercase',
+  letterSpacing: '2px',
+  fontWeight: 500,
+  whiteSpace: 'nowrap',
+};
+
+const roleBadgeColor: Record<string, string> = {
+  Direttrice: '#e8a020',
+  'Vice Direttore': '#c87d10',
+  'Responsabile Vendite': '#3b82f6',
+  'Venditore Senior': '#22c55e',
+  Venditore: '#6b7280',
+  Stagista: '#4b5563',
+};
+
+function InitialsAvatar({ name, color }: { name: string; color: string }) {
+  const initials = name
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div
+      style={{
+        width: '32px',
+        height: '32px',
+        borderRadius: '50%',
+        backgroundColor: `${color}20`,
+        border: `0.5px solid ${color}44`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '11px',
+        color: color,
+        fontWeight: 500,
+        flexShrink: 0,
+      }}
+    >
+      {initials || '?'}
+    </div>
+  );
+}
 
 export default function PannelloAdmin() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -41,117 +112,129 @@ export default function PannelloAdmin() {
     fetchProfiles();
   }
 
-  const roleBadgeColor: Record<string, string> = {
-    Direttrice: '#e8a020',
-    'Vice Direttore': '#c87d10',
-    'Responsabile Vendite': '#3b82f6',
-    'Venditore Senior': '#22c55e',
-    Venditore: '#6b7280',
-    Stagista: '#4b5563',
-  };
+  const metricCards = [
+    { label: 'Utenti Totali', value: profiles.length, color: '#ffffff' },
+    { label: 'Account Attivi', value: profiles.filter(p => p.is_active && p.role).length, color: '#4caf50' },
+    { label: 'In Attesa di Ruolo', value: profiles.filter(p => !p.role).length, color: '#e8a020' },
+    { label: 'Account Disattivati', value: profiles.filter(p => !p.is_active).length, color: '#f87171' },
+  ];
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl" style={{ backgroundColor: '#e8a02020' }}>
-          <Shield className="w-5 h-5" style={{ color: '#e8a020' }} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Pannello Amministratore</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Gestione utenti e ruoli</p>
-        </div>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>Pannello Admin</span>
+        <span style={{ fontSize: '11px', color: '#e8a020', backgroundColor: '#e8a02015', border: '0.5px solid #e8a02033', borderRadius: '6px', padding: '2px 8px' }}>
+          Gestione Utenti
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-gray-800 p-4" style={{ backgroundColor: '#111111' }}>
-          <p className="text-2xl font-bold text-white">{profiles.length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Utenti totali</p>
-        </div>
-        <div className="rounded-2xl border border-gray-800 p-4" style={{ backgroundColor: '#111111' }}>
-          <p className="text-2xl font-bold text-green-400">{profiles.filter(p => p.is_active && p.role).length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Account attivi</p>
-        </div>
-        <div className="rounded-2xl border border-gray-800 p-4" style={{ backgroundColor: '#111111' }}>
-          <p className="text-2xl font-bold" style={{ color: '#e8a020' }}>{profiles.filter(p => !p.role).length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">In attesa di ruolo</p>
-        </div>
-        <div className="rounded-2xl border border-gray-800 p-4" style={{ backgroundColor: '#111111' }}>
-          <p className="text-2xl font-bold text-red-400">{profiles.filter(p => !p.is_active).length}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Account disattivati</p>
-        </div>
+      {/* Metric cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+        {metricCards.map(m => (
+          <div key={m.label} style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '8px', padding: '12px 16px' }}>
+            <div style={{ fontSize: '10px', color: '#555555', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
+            <div style={{ fontSize: '22px', fontWeight: 500, color: m.color }}>{m.value}</div>
+          </div>
+        ))}
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-gray-500">Caricamento...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#555555', fontSize: '13px' }}>Caricamento...</div>
       ) : (
-        <div className="rounded-2xl border border-gray-800 overflow-hidden" style={{ backgroundColor: '#111111' }}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div style={{ backgroundColor: '#0f0f0f', border: '0.5px solid #e8a02033', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Nome RP</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Cognome RP</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Discord</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Ruolo</th>
-                  <th className="text-left px-4 py-3 text-gray-400 font-medium">Stato</th>
-                  <th className="px-4 py-3" />
+                <tr style={{ borderBottom: '0.5px solid #1e1e1e' }}>
+                  <th style={thStyle}>Utente</th>
+                  <th style={thStyle}>Discord</th>
+                  <th style={thStyle}>Ruolo</th>
+                  <th style={thStyle}>Stato</th>
+                  <th style={{ ...thStyle, width: '60px' }} />
                 </tr>
               </thead>
               <tbody>
-                {profiles.map((p, i) => {
+                {profiles.map(p => {
                   const hasAssignedRole = p.role && ROLES.includes(p.role as UserRole);
                   const badgeColor = hasAssignedRole ? (roleBadgeColor[p.role] || '#4b5563') : '#4b5563';
+                  const displayName = fullName(p) || p.nome || '?';
                   return (
-                    <tr key={p.id} className={`border-b border-gray-800/50 hover:bg-white/2 transition-colors ${i % 2 === 0 ? '' : 'bg-white/[0.02]'}`}>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-black shrink-0"
-                            style={{ backgroundColor: badgeColor }}
-                          >
-                            {p.nome ? p.nome.charAt(0).toUpperCase() : '?'}
+                    <tr
+                      key={p.id}
+                      style={{ borderBottom: '0.5px solid #1a1a1a', transition: 'background-color 0.1s' }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = '#ffffff05')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'transparent')}
+                    >
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <InitialsAvatar name={displayName} color={badgeColor} />
+                          <div>
+                            <div style={{ color: p.is_active ? '#ffffff' : '#555555', fontWeight: 500, fontSize: '13px' }}>
+                              {displayName}
+                            </div>
                           </div>
-                          <span className={`font-medium ${p.is_active ? 'text-white' : 'text-gray-500'}`}>
-                            {p.nome || '—'}
-                          </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-300">{p.cognome || '—'}</td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">{p.discord_username || '—'}</td>
-                      <td className="px-4 py-3">
+                      <td style={{ padding: '10px 14px', color: '#555555', fontSize: '12px' }}>{p.discord_username || '—'}</td>
+                      <td style={{ padding: '10px 14px' }}>
                         {hasAssignedRole ? (
-                          <span
-                            className="px-2.5 py-1 rounded-full text-xs font-medium"
-                            style={{ backgroundColor: `${badgeColor}20`, color: badgeColor }}
-                          >
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            color: badgeColor,
+                            backgroundColor: `${badgeColor}20`,
+                            border: `0.5px solid ${badgeColor}44`,
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                          }}>
                             {p.role}
                           </span>
                         ) : (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-900/30 text-yellow-400 border border-yellow-700/40">
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            color: '#e8a020',
+                            backgroundColor: '#e8a02015',
+                            border: '0.5px solid #e8a02033',
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                          }}>
                             Senza ruolo
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${p.is_active ? 'bg-green-900/30 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          color: p.is_active ? '#4caf50' : '#555555',
+                          backgroundColor: p.is_active ? 'rgba(76,175,80,0.1)' : 'rgba(85,85,85,0.1)',
+                          border: `0.5px solid ${p.is_active ? 'rgba(76,175,80,0.3)' : '#2a2a2a'}`,
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                        }}>
                           {p.is_active ? 'Attivo' : 'Disattivato'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => openEdit(p)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button onClick={() => openEdit(p)}
+                            style={{ padding: '5px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
                             title="Modifica ruolo"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ffffff'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff10'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                            <IconPencil size={13} />
                           </button>
-                          <button
-                            onClick={() => setToggleConfirm(p)}
-                            className={`p-1.5 rounded-lg transition-colors ${p.is_active ? 'text-gray-400 hover:text-red-400 hover:bg-red-900/20' : 'text-gray-400 hover:text-green-400 hover:bg-green-900/20'}`}
+                          <button onClick={() => setToggleConfirm(p)}
+                            style={{ padding: '5px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#555555' }}
                             title={p.is_active ? 'Disattiva account' : 'Riattiva account'}
-                          >
-                            {p.is_active ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = p.is_active ? 'rgba(239,68,68,0.1)' : 'rgba(76,175,80,0.1)';
+                              (e.currentTarget as HTMLButtonElement).style.color = p.is_active ? '#f87171' : '#4caf50';
+                            }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#555555'; (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+                            {p.is_active ? <IconUserOff size={13} /> : <IconUserCheck size={13} />}
                           </button>
                         </div>
                       </td>
@@ -166,32 +249,39 @@ export default function PannelloAdmin() {
 
       {editingUser && (
         <Modal title={`Modifica Ruolo — ${fullName(editingUser)}`} onClose={() => setEditingUser(null)}>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome RP</label>
-              <div className="px-3 py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm">{editingUser.nome || '—'} {editingUser.cognome || ''}</div>
+              <label style={labelStyle}>Nome RP</label>
+              <div style={{ ...inputStyle, color: '#888888', cursor: 'default' }}>{editingUser.nome || '—'} {editingUser.cognome || ''}</div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Discord</label>
-              <div className="px-3 py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm">{editingUser.discord_username || '—'}</div>
+              <label style={labelStyle}>Discord</label>
+              <div style={{ ...inputStyle, color: '#888888', cursor: 'default' }}>{editingUser.discord_username || '—'}</div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Ruolo attuale</label>
-              <div className="px-3 py-2.5 rounded-xl bg-gray-800 text-gray-400 text-sm">{editingUser.role || 'Nessun ruolo assegnato'}</div>
+              <label style={labelStyle}>Ruolo Attuale</label>
+              <div style={{ ...inputStyle, color: '#888888', cursor: 'default' }}>{editingUser.role || 'Nessun ruolo assegnato'}</div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Nuovo Ruolo</label>
-              <select
-                value={editRole}
-                onChange={e => setEditRole(e.target.value as UserRole)}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-              >
+              <label style={labelStyle}>Nuovo Ruolo</label>
+              <select value={editRole} onChange={e => setEditRole(e.target.value as UserRole)}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setEditingUser(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm hover:bg-white/5">Annulla</button>
-              <button onClick={handleSaveRole} disabled={saving} className="flex-1 py-2.5 rounded-xl font-semibold text-black text-sm hover:brightness-110 disabled:opacity-50" style={{ backgroundColor: '#e8a020' }}>
+            <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+              <button onClick={() => setEditingUser(null)}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                Annulla
+              </button>
+              <button onClick={handleSaveRole} disabled={saving}
+                style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', backgroundColor: '#e8a020', color: '#000000', fontSize: '13px', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+                onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.filter = 'none')}>
                 {saving ? 'Salvataggio...' : 'Assegna Ruolo'}
               </button>
             </div>
@@ -201,17 +291,27 @@ export default function PannelloAdmin() {
 
       {toggleConfirm && (
         <Modal title={toggleConfirm.is_active ? 'Disattiva Account' : 'Riattiva Account'} onClose={() => setToggleConfirm(null)}>
-          <p className="text-gray-300 mb-6">
+          <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>
             {toggleConfirm.is_active
               ? `Disattivare l'account di ${fullName(toggleConfirm)}? L'utente non potrà più accedere.`
               : `Riattivare l'account di ${fullName(toggleConfirm)}?`}
           </p>
-          <div className="flex gap-3">
-            <button onClick={() => setToggleConfirm(null)} className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-300 text-sm">Annulla</button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => setToggleConfirm(null)}
+              style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '0.5px solid #2a2a2a', backgroundColor: 'transparent', color: '#888888', fontSize: '13px', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+              Annulla
+            </button>
             <button
               onClick={() => handleToggleActive(toggleConfirm)}
-              className={`flex-1 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${toggleConfirm.is_active ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'}`}
-            >
+              style={{
+                flex: 1, padding: '9px', borderRadius: '8px', border: 'none',
+                backgroundColor: toggleConfirm.is_active ? '#dc2626' : '#16a34a',
+                color: '#ffffff', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+              onMouseLeave={e => (e.currentTarget.style.filter = 'none')}>
               {toggleConfirm.is_active ? 'Disattiva' : 'Riattiva'}
             </button>
           </div>
