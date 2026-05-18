@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Image, ChevronDown } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Plus, Pencil, Trash2, Search, Image, ChevronDown, Upload, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Veicolo, VeicoloStato, isAdmin, fullName } from '../../types';
@@ -40,6 +40,9 @@ export default function Inventario() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchVeicoli(); }, []);
 
@@ -56,6 +59,8 @@ export default function Inventario() {
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
+    setFotoFile(null);
+    setFotoPreview(null);
     setError('');
     setModalOpen(true);
   }
@@ -74,8 +79,35 @@ export default function Inventario() {
       stato: v.stato,
       note: v.note || '',
     });
+    setFotoFile(null);
+    setFotoPreview(v.foto_url || null);
     setError('');
     setModalOpen(true);
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFotoFile(file);
+    setFotoPreview(URL.createObjectURL(file));
+  }
+
+  function clearFoto() {
+    setFotoFile(null);
+    setFotoPreview(null);
+    setForm(f => ({ ...f, foto_url: '' }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  async function uploadFoto(file: File, vehicleId: string): Promise<string | null> {
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${vehicleId}.${ext}`;
+    const { error } = await supabase.storage
+      .from('vehicle-photos')
+      .upload(path, file, { upsert: true });
+    if (error) return null;
+    const { data } = supabase.storage.from('vehicle-photos').getPublicUrl(path);
+    return data.publicUrl;
   }
 
   async function handleSave() {
@@ -85,23 +117,51 @@ export default function Inventario() {
       return;
     }
     setSaving(true);
-    const payload = {
-      modello: form.modello.trim(),
-      colore: form.colore.trim(),
-      condizioni: form.condizioni,
-      prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
-      prezzo_vendita: form.prezzo_vendita ? parseFloat(form.prezzo_vendita) : null,
-      trattabile: form.trattabile,
-      modifiche: form.modifiche.trim() || null,
-      foto_url: form.foto_url.trim() || null,
-      stato: form.stato,
-      note: form.note.trim() || null,
-    };
+    let foto_url = form.foto_url.trim() || null;
 
     if (editing) {
+      if (fotoFile) {
+        foto_url = await uploadFoto(fotoFile, editing.id) ?? foto_url;
+      } else if (!fotoPreview) {
+        foto_url = null;
+      }
+      const payload = {
+        modello: form.modello.trim(),
+        colore: form.colore.trim(),
+        condizioni: form.condizioni,
+        prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
+        prezzo_vendita: form.prezzo_vendita ? parseFloat(form.prezzo_vendita) : null,
+        trattabile: form.trattabile,
+        modifiche: form.modifiche.trim() || null,
+        foto_url,
+        stato: form.stato,
+        note: form.note.trim() || null,
+      };
       await supabase.from('inventario').update(payload).eq('id', editing.id);
     } else {
-      await supabase.from('inventario').insert({ ...payload, created_by: profile?.id });
+      const { data: inserted } = await supabase
+        .from('inventario')
+        .insert({
+          modello: form.modello.trim(),
+          colore: form.colore.trim(),
+          condizioni: form.condizioni,
+          prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
+          prezzo_vendita: form.prezzo_vendita ? parseFloat(form.prezzo_vendita) : null,
+          trattabile: form.trattabile,
+          modifiche: form.modifiche.trim() || null,
+          foto_url: null,
+          stato: form.stato,
+          note: form.note.trim() || null,
+          created_by: profile?.id,
+        })
+        .select()
+        .single();
+      if (inserted && fotoFile) {
+        const uploadedUrl = await uploadFoto(fotoFile, inserted.id);
+        if (uploadedUrl) {
+          await supabase.from('inventario').update({ foto_url: uploadedUrl }).eq('id', inserted.id);
+        }
+      }
     }
 
     await fetchVeicoli();
@@ -326,13 +386,44 @@ export default function Inventario() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">URL Foto</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Foto Veicolo</label>
               <input
-                value={form.foto_url}
-                onChange={e => setForm(f => ({ ...f, foto_url: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                placeholder="https://..."
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleFileSelect}
               />
+              {fotoPreview ? (
+                <div className="relative rounded-xl overflow-hidden h-40 bg-gray-900">
+                  <img src={fotoPreview} alt="preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={clearFoto}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs hover:bg-black/80 transition-colors"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Cambia
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-32 rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-gray-500 hover:text-gray-400 transition-colors"
+                >
+                  <Upload className="w-6 h-6" />
+                  <span className="text-sm">Clicca per caricare una foto</span>
+                  <span className="text-xs">JPG, PNG, WEBP fino a 5MB</span>
+                </button>
+              )}
             </div>
 
             <div>
