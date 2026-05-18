@@ -17,6 +17,18 @@ import StarRating from '../../components/ui/StarRating';
 
 const STATI: VeicoloStato[] = ['Da completare', 'Disponibile', 'In Trattativa', 'Venduto'];
 
+/** Accept only https:// URLs — prevents javascript: or data: injection via DB tampering. */
+function sanitizeImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 const statoBadge: Record<VeicoloStato, { bg: string; color: string }> = {
   'Da completare': { bg: 'rgba(255,140,0,0.15)', color: '#ff8c00' },
   Disponibile: { bg: 'rgba(76,175,80,0.15)', color: '#4caf50' },
@@ -116,9 +128,23 @@ export default function Inventario() {
     setModalOpen(true);
   }
 
+  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      setError('Tipo file non supportato. Usa JPG, PNG, WEBP o GIF.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Il file supera il limite di 5 MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    setError('');
     setFotoFile(file);
     setFotoPreview(URL.createObjectURL(file));
   }
@@ -370,8 +396,8 @@ export default function Inventario() {
                     overflow: 'hidden',
                   }}
                 >
-                  {v.foto_url ? (
-                    <img src={v.foto_url} alt={v.modello} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {sanitizeImageUrl(v.foto_url) ? (
+                    <img src={sanitizeImageUrl(v.foto_url)!} alt={v.modello} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <IconCar size={40} style={{ color: '#333333' }} />
                   )}

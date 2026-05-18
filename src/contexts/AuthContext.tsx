@@ -117,6 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    // Clear local state immediately so the UI transitions to logged-out
+    // even if the Supabase network call is slow or fails.
+    setUser(null);
+    setSession(null);
+    setProfile(null);
     await supabase.auth.signOut();
   }
 
