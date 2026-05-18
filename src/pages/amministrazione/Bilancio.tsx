@@ -86,7 +86,7 @@ export default function Bilancio() {
   const totalIncassato = records.reduce((s, r) => s + r.totale_incassato, 0);
   const totalSpeso = records.reduce((s, r) => s + r.totale_speso, 0);
   const totalSaldo = totalIncassato - totalSpeso;
-  const formatEuro = (n: number) => `€ ${n.toLocaleString('it-IT', { minimumFractionDigits: 0 })}`;
+  const formatEuro = (n: number) => `$ ${n.toLocaleString('it-IT', { minimumFractionDigits: 0 })}`;
   const formatDate = (d: string) => new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
@@ -201,7 +201,7 @@ export default function Bilancio() {
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" placeholder="0" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Totale Speso (€)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Totale Speso ($)</label>
                 <input type="number" value={form.totale_speso} onChange={e => setForm(f => ({ ...f, totale_speso: e.target.value }))}
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" placeholder="0" />
               </div>
@@ -211,7 +211,7 @@ export default function Bilancio() {
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" placeholder="0" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Totale Incassato (€)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Totale Incassato ($)</label>
                 <input type="number" value={form.totale_incassato} onChange={e => setForm(f => ({ ...f, totale_incassato: e.target.value }))}
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" placeholder="0" />
               </div>
@@ -219,7 +219,7 @@ export default function Bilancio() {
             <div className="rounded-xl p-3" style={{ backgroundColor: '#0a0a0a' }}>
               <p className="text-gray-400 text-sm">
                 Saldo giornaliero: <span className={`font-semibold ${(parseFloat(form.totale_incassato) || 0) - (parseFloat(form.totale_speso) || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {`€ ${((parseFloat(form.totale_incassato) || 0) - (parseFloat(form.totale_speso) || 0)).toLocaleString('it-IT')}`}
+                  {`$ ${((parseFloat(form.totale_incassato) || 0) - (parseFloat(form.totale_speso) || 0)).toLocaleString('it-IT')}`}
                 </span>
               </p>
             </div>

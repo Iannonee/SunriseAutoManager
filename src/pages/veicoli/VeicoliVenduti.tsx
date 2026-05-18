@@ -111,7 +111,7 @@ export default function VeicoliVenduti() {
     fetchAll();
   }
 
-  const formatEuro = (n: number) => `€ ${n.toLocaleString('it-IT')}`;
+  const formatEuro = (n: number) => `$ ${n.toLocaleString('it-IT')}`;
   const formatDate = (d: string) => new Date(d).toLocaleDateString('it-IT');
 
   return (
@@ -202,7 +202,7 @@ export default function VeicoliVenduti() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo di Vendita Finale (€)</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo di Vendita Finale ($)</label>
               <input
                 type="number"
                 value={form.prezzo_vendita_finale}

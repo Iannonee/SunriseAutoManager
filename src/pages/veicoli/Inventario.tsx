@@ -182,7 +182,7 @@ export default function Inventario() {
     return matchSearch && matchStato;
   });
 
-  const formatEuro = (n: number | null) => n != null ? `€ ${n.toLocaleString('it-IT', { minimumFractionDigits: 0 })}` : '—';
+  const formatEuro = (n: number | null) => n != null ? `$ ${n.toLocaleString('it-IT', { minimumFractionDigits: 0 })}` : '—';
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -341,7 +341,7 @@ export default function Inventario() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto (€)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto ($)</label>
                 <input
                   type="number"
                   value={form.prezzo_acquisto}
@@ -351,7 +351,7 @@ export default function Inventario() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Vendita (€)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Vendita ($)</label>
                 <input
                   type="number"
                   value={form.prezzo_vendita}

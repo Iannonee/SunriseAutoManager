@@ -114,7 +114,7 @@ export default function AutoAcquistate() {
     fetchData();
   }
 
-  const formatEuro = (n: number) => `€ ${n.toLocaleString('it-IT')}`;
+  const formatEuro = (n: number) => `$ ${n.toLocaleString('it-IT')}`;
   const formatDate = (d: string) => new Date(d).toLocaleDateString('it-IT');
   const canEdit = canEditAutoAcquistate(profile?.role);
 
@@ -216,7 +216,7 @@ export default function AutoAcquistate() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto (€)</label>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto ($)</label>
               <input
                 type="number"
                 value={form.prezzo_acquisto}
