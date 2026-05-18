@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import PriceInput, { parsePrice } from '../../components/ui/PriceInput';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { BilancioRecord, fullName } from '../../types';
@@ -62,9 +63,9 @@ export default function Bilancio() {
     const payload = {
       data: form.data,
       veicoli_acquistati: parseInt(form.veicoli_acquistati) || 0,
-      totale_speso: parseFloat(form.totale_speso) || 0,
+      totale_speso: parsePrice(form.totale_speso),
       veicoli_venduti: parseInt(form.veicoli_venduti) || 0,
-      totale_incassato: parseFloat(form.totale_incassato) || 0,
+      totale_incassato: parsePrice(form.totale_incassato),
       note: form.note.trim() || null,
     };
     if (editing) {
@@ -202,8 +203,8 @@ export default function Bilancio() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Totale Speso ($)</label>
-                <input type="number" value={form.totale_speso} onChange={e => setForm(f => ({ ...f, totale_speso: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" placeholder="0" />
+                <PriceInput value={form.totale_speso} onChange={v => setForm(f => ({ ...f, totale_speso: v }))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Veicoli Venduti</label>
@@ -212,14 +213,14 @@ export default function Bilancio() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Totale Incassato ($)</label>
-                <input type="number" value={form.totale_incassato} onChange={e => setForm(f => ({ ...f, totale_incassato: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" placeholder="0" />
+                <PriceInput value={form.totale_incassato} onChange={v => setForm(f => ({ ...f, totale_incassato: v }))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500" />
               </div>
             </div>
             <div className="rounded-xl p-3" style={{ backgroundColor: '#0a0a0a' }}>
               <p className="text-gray-400 text-sm">
-                Saldo giornaliero: <span className={`font-semibold ${(parseFloat(form.totale_incassato) || 0) - (parseFloat(form.totale_speso) || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {`$ ${((parseFloat(form.totale_incassato) || 0) - (parseFloat(form.totale_speso) || 0)).toLocaleString('it-IT')}`}
+                Saldo giornaliero: <span className={`font-semibold ${parsePrice(form.totale_incassato) - parsePrice(form.totale_speso) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {`$ ${(parsePrice(form.totale_incassato) - parsePrice(form.totale_speso)).toLocaleString('it-IT')}`}
                 </span>
               </p>
             </div>

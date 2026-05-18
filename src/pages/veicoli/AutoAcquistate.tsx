@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import PriceInput, { parsePrice } from '../../components/ui/PriceInput';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AutoAcquistata, Profile, isAdmin, canEditAutoAcquistate, fullName } from '../../types';
@@ -80,7 +81,7 @@ export default function AutoAcquistate() {
     const payload = {
       modello: form.modello.trim(),
       colore: form.colore.trim(),
-      prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
+      prezzo_acquisto: parsePrice(form.prezzo_acquisto),
       venduto_da: form.venduto_da.trim(),
       dipendente_id: form.dipendente_id || null,
       data: form.data,
@@ -95,7 +96,7 @@ export default function AutoAcquistate() {
       await supabase.from('inventario').insert({
         modello: form.modello.trim(),
         colore: form.colore.trim(),
-        prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
+        prezzo_acquisto: parsePrice(form.prezzo_acquisto),
         condizioni: 3,
         trattabile: false,
         stato: 'Da completare',
@@ -217,12 +218,10 @@ export default function AutoAcquistate() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto ($)</label>
-              <input
-                type="number"
+              <PriceInput
                 value={form.prezzo_acquisto}
-                onChange={e => setForm(f => ({ ...f, prezzo_acquisto: e.target.value }))}
+                onChange={v => setForm(f => ({ ...f, prezzo_acquisto: v }))}
                 className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                placeholder="0"
               />
             </div>
 

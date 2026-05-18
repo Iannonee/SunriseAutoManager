@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import PriceInput, { parsePrice } from '../../components/ui/PriceInput';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { VeicoloVenduto, Veicolo, Profile, canEditVeicoliVenduti, fullName } from '../../types';
@@ -81,7 +82,7 @@ export default function VeicoliVenduti() {
 
     if (editing) {
       await supabase.from('veicoli_venduti').update({
-        prezzo_vendita_finale: parseFloat(form.prezzo_vendita_finale) || 0,
+        prezzo_vendita_finale: parsePrice(form.prezzo_vendita_finale),
         acquirente: form.acquirente.trim(),
         dipendente_id: form.dipendente_id || null,
         data: form.data,
@@ -89,7 +90,7 @@ export default function VeicoliVenduti() {
     } else {
       await supabase.from('veicoli_venduti').insert({
         veicolo_id: form.veicolo_id,
-        prezzo_vendita_finale: parseFloat(form.prezzo_vendita_finale) || 0,
+        prezzo_vendita_finale: parsePrice(form.prezzo_vendita_finale),
         acquirente: form.acquirente.trim(),
         dipendente_id: form.dipendente_id || null,
         data: form.data,
@@ -203,12 +204,10 @@ export default function VeicoliVenduti() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo di Vendita Finale ($)</label>
-              <input
-                type="number"
+              <PriceInput
                 value={form.prezzo_vendita_finale}
-                onChange={e => setForm(f => ({ ...f, prezzo_vendita_finale: e.target.value }))}
+                onChange={v => setForm(f => ({ ...f, prezzo_vendita_finale: v }))}
                 className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                placeholder="0"
               />
             </div>
 

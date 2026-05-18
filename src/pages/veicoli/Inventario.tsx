@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Plus, Pencil, Trash2, Search, Image, ChevronDown, Upload, X } from 'lucide-react';
+import PriceInput, { parsePrice } from '../../components/ui/PriceInput';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Veicolo, VeicoloStato, isAdmin, fullName } from '../../types';
@@ -129,8 +130,8 @@ export default function Inventario() {
         modello: form.modello.trim(),
         colore: form.colore.trim(),
         condizioni: form.condizioni,
-        prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
-        prezzo_vendita: form.prezzo_vendita ? parseFloat(form.prezzo_vendita) : null,
+        prezzo_acquisto: parsePrice(form.prezzo_acquisto),
+        prezzo_vendita: form.prezzo_vendita ? parsePrice(form.prezzo_vendita) : null,
         trattabile: form.trattabile,
         modifiche: form.modifiche.trim() || null,
         foto_url,
@@ -145,8 +146,8 @@ export default function Inventario() {
           modello: form.modello.trim(),
           colore: form.colore.trim(),
           condizioni: form.condizioni,
-          prezzo_acquisto: parseFloat(form.prezzo_acquisto) || 0,
-          prezzo_vendita: form.prezzo_vendita ? parseFloat(form.prezzo_vendita) : null,
+          prezzo_acquisto: parsePrice(form.prezzo_acquisto),
+          prezzo_vendita: form.prezzo_vendita ? parsePrice(form.prezzo_vendita) : null,
           trattabile: form.trattabile,
           modifiche: form.modifiche.trim() || null,
           foto_url: null,
@@ -342,22 +343,18 @@ export default function Inventario() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Acquisto ($)</label>
-                <input
-                  type="number"
+                <PriceInput
                   value={form.prezzo_acquisto}
-                  onChange={e => setForm(f => ({ ...f, prezzo_acquisto: e.target.value }))}
+                  onChange={v => setForm(f => ({ ...f, prezzo_acquisto: v }))}
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                  placeholder="0"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">Prezzo Vendita ($)</label>
-                <input
-                  type="number"
+                <PriceInput
                   value={form.prezzo_vendita}
-                  onChange={e => setForm(f => ({ ...f, prezzo_vendita: e.target.value }))}
+                  onChange={v => setForm(f => ({ ...f, prezzo_vendita: v }))}
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-yellow-500"
-                  placeholder="0"
                 />
               </div>
             </div>
