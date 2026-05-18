@@ -1,6 +1,19 @@
-import { Car, ShoppingCart, TrendingUp, Clock, MessageSquare, Ban, BarChart3, Megaphone, MessageCircle, Users, ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import {
+  IconCar,
+  IconShoppingCart,
+  IconTrendingUp,
+  IconClock,
+  IconMessage,
+  IconBan,
+  IconChartBar,
+  IconSpeakerphone,
+  IconMessageDots,
+  IconUsers,
+  IconLogout,
+} from '@tabler/icons-react';
 import { isAdmin } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { fullName } from '../../types';
 
 type Page =
   | 'inventario'
@@ -29,59 +42,45 @@ interface NavItem {
 }
 
 interface NavGroup {
+  key: string;
   label: string;
   items: NavItem[];
+  show: boolean;
 }
 
 export default function Sidebar({ currentPage, onNavigate, role, mobile, onClose }: SidebarProps) {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    veicoli: true,
-    operativo: true,
-    amministrazione: true,
-    admin: true,
-  });
+  const { profile, signOut } = useAuth();
 
-  function toggle(group: string) {
-    setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
-  }
-
-  const groups: { key: string; label: string; items: NavItem[]; show: boolean }[] = [
+  const groups: NavGroup[] = [
     {
       key: 'veicoli',
-      label: 'Veicoli',
+      label: 'VEICOLI',
       show: true,
       items: [
-        { id: 'inventario', label: 'Inventario', icon: <Car className="w-4 h-4" /> },
-        { id: 'auto-acquistate', label: 'Auto Acquistate', icon: <ShoppingCart className="w-4 h-4" /> },
-        { id: 'veicoli-venduti', label: 'Veicoli Venduti', icon: <TrendingUp className="w-4 h-4" /> },
+        { id: 'inventario', label: 'Inventario', icon: <IconCar size={16} /> },
+        { id: 'auto-acquistate', label: 'Auto Acquistate', icon: <IconShoppingCart size={16} /> },
+        { id: 'veicoli-venduti', label: 'Veicoli Venduti', icon: <IconTrendingUp size={16} /> },
       ],
     },
     {
       key: 'operativo',
-      label: 'Operativo',
+      label: 'OPERATIVO',
       show: true,
       items: [
-        { id: 'turni', label: 'Turni', icon: <Clock className="w-4 h-4" /> },
-        { id: 'comunicazioni', label: 'Comunicazioni', icon: <MessageSquare className="w-4 h-4" /> },
-        { id: 'blacklist', label: 'Blacklist Clienti', icon: <Ban className="w-4 h-4" /> },
-        { id: 'comunicazioni-staff', label: 'Comunicazioni Staff', icon: <Megaphone className="w-4 h-4" /> },
+        { id: 'turni', label: 'Turni', icon: <IconClock size={16} /> },
+        { id: 'comunicazioni', label: 'Comunicazioni', icon: <IconMessage size={16} /> },
+        { id: 'blacklist', label: 'Blacklist Clienti', icon: <IconBan size={16} /> },
+        { id: 'comunicazioni-staff', label: 'Comunicazioni Staff', icon: <IconSpeakerphone size={16} /> },
       ],
     },
     {
       key: 'amministrazione',
-      label: 'Amministrazione',
+      label: 'AMMINISTRAZIONE',
       show: isAdmin(role),
       items: [
-        { id: 'bilancio', label: 'Bilancio', icon: <BarChart3 className="w-4 h-4" /> },
-        { id: 'chat-admin', label: 'Chat Amministrazione', icon: <MessageCircle className="w-4 h-4" /> },
-      ],
-    },
-    {
-      key: 'admin',
-      label: 'Pannello Admin',
-      show: isAdmin(role),
-      items: [
-        { id: 'admin-panel', label: 'Gestione Utenti', icon: <Users className="w-4 h-4" /> },
+        { id: 'bilancio', label: 'Bilancio', icon: <IconChartBar size={16} /> },
+        { id: 'chat-admin', label: 'Chat Amministrazione', icon: <IconMessageDots size={16} /> },
+        { id: 'admin-panel', label: 'Gestione Utenti', icon: <IconUsers size={16} /> },
       ],
     },
   ];
@@ -91,45 +90,128 @@ export default function Sidebar({ currentPage, onNavigate, role, mobile, onClose
     if (mobile && onClose) onClose();
   }
 
+  const initials = profile
+    ? `${profile.nome?.charAt(0) ?? ''}${profile.cognome?.charAt(0) ?? ''}`.toUpperCase()
+    : '?';
+
   return (
     <div
-      className={`flex flex-col h-full ${mobile ? '' : 'w-64'}`}
-      style={{ backgroundColor: '#0f0f0f', borderRight: '1px solid #1f1f1f' }}
+      className="flex flex-col h-full"
+      style={{
+        width: '220px',
+        backgroundColor: '#0f0f0f',
+        borderRight: '0.5px solid #1e1e1e',
+      }}
     >
-      <div className="flex-1 overflow-y-auto py-4 px-3">
+      {/* Logo */}
+      <div className="px-4 pt-5 pb-4">
+        <div style={{ fontSize: '18px', fontWeight: 500, color: '#e8a020' }}>Sunrise Auto</div>
+        <div style={{ fontSize: '11px', color: '#555555', letterSpacing: '1px', marginTop: '2px' }}>
+          Gestionale
+        </div>
+      </div>
+
+      {/* Nav */}
+      <div className="flex-1 overflow-y-auto px-3">
         {groups.filter(g => g.show).map(group => (
-          <div key={group.key} className="mb-2">
-            <button
-              onClick={() => toggle(group.key)}
-              className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold uppercase tracking-widest text-gray-500 hover:text-gray-400 transition-colors"
+          <div key={group.key} style={{ marginTop: '20px' }}>
+            <div
+              style={{
+                fontSize: '10px',
+                color: '#555555',
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                padding: '0 8px',
+                marginBottom: '6px',
+              }}
             >
-              <span>{group.label}</span>
-              {openGroups[group.key] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            </button>
-            {openGroups[group.key] && (
-              <div className="space-y-0.5 mt-1">
-                {group.items.map(item => {
-                  const active = currentPage === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNav(item.id)}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                        active
-                          ? 'text-black'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5'
-                      }`}
-                      style={active ? { backgroundColor: '#e8a020' } : {}}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+              {group.label}
+            </div>
+            <div className="space-y-0.5">
+              {group.items.map(item => {
+                const active = currentPage === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNav(item.id)}
+                    className="flex items-center gap-2.5 w-full transition-all"
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      color: active ? '#e8a020' : '#888888',
+                      backgroundColor: active ? '#e8a02015' : 'transparent',
+                      borderLeft: active ? '2px solid #e8a020' : '2px solid transparent',
+                    }}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff08';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#cccccc';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#888888';
+                      }
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* Footer */}
+      <div
+        className="px-3 py-4"
+        style={{ borderTop: '0.5px solid #1e1e1e' }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex items-center justify-center shrink-0"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: '#e8a02015',
+              border: '0.5px solid #e8a02033',
+              fontSize: '12px',
+              color: '#e8a020',
+              fontWeight: 500,
+            }}
+          >
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div
+              className="truncate"
+              style={{ fontSize: '13px', color: '#ffffff', fontWeight: 500 }}
+            >
+              {profile ? fullName(profile) : '—'}
+            </div>
+            <div
+              className="truncate"
+              style={{ fontSize: '11px', color: '#555555' }}
+            >
+              {profile?.role || '—'}
+            </div>
+          </div>
+          <button
+            onClick={signOut}
+            className="p-1.5 rounded-lg transition-colors shrink-0"
+            style={{ color: '#555555' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#ff4444')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#555555')}
+            title="Esci"
+          >
+            <IconLogout size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,34 +1,52 @@
-import { X } from 'lucide-react';
-import { ReactNode } from 'react';
+import { IconX, IconEdit } from '@tabler/icons-react';
+import { ReactNode, ComponentType } from 'react';
 
 interface ModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  icon?: ComponentType<{ size?: number; color?: string; style?: React.CSSProperties }>;
 }
 
-export default function Modal({ title, onClose, children, wide }: ModalProps) {
+export default function Modal({ title, onClose, children, wide, icon: Icon = IconEdit }: ModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
-        className={`relative z-10 rounded-2xl border border-gray-800 w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto`}
-        style={{ backgroundColor: '#111111' }}
+        className="absolute inset-0"
+        style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+        onClick={onClose}
+      />
+      <div
+        className={`relative z-10 w-full ${wide ? 'max-w-[560px]' : 'max-w-[480px]'} max-h-[90vh] overflow-y-auto`}
+        style={{
+          backgroundColor: '#0f0f0f',
+          border: '0.5px solid #e8a02044',
+          borderRadius: '12px',
+        }}
       >
         <div
-          className="flex items-center justify-between px-6 py-4 border-b border-gray-800 sticky top-0 z-10"
-          style={{ backgroundColor: '#111111' }}
+          className="flex items-center justify-between px-5 py-4 sticky top-0 z-10"
+          style={{
+            backgroundColor: '#0f0f0f',
+            borderBottom: '0.5px solid #1e1e1e',
+          }}
         >
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <div className="flex items-center gap-2.5">
+            <Icon size={18} style={{ color: '#e8a020' }} />
+            <h3 style={{ fontSize: '15px', fontWeight: 500, color: '#ffffff' }}>{title}</h3>
+          </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: '#888888' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#cccccc')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#888888')}
           >
-            <X className="w-5 h-5" />
+            <IconX size={16} />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div style={{ padding: '20px' }}>{children}</div>
       </div>
     </div>
   );

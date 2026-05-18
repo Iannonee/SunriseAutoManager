@@ -16,20 +16,51 @@ import ComunicazioniStaff from './pages/amministrazione/ComunicazioniStaff';
 import ChatAmministrazione from './pages/amministrazione/ChatAmministrazione';
 import PannelloAdmin from './pages/admin/PannelloAdmin';
 import { isAdmin } from './types';
+import { IconX } from '@tabler/icons-react';
+
+const PAGE_TITLES: Record<Page, string> = {
+  'inventario': 'Inventario',
+  'auto-acquistate': 'Auto Acquistate',
+  'veicoli-venduti': 'Veicoli Venduti',
+  'turni': 'Turni',
+  'comunicazioni': 'Comunicazioni',
+  'blacklist': 'Blacklist Clienti',
+  'comunicazioni-staff': 'Comunicazioni Staff',
+  'bilancio': 'Bilancio',
+  'chat-admin': 'Chat Amministrazione',
+  'admin-panel': 'Pannello Admin',
+};
 
 function DisabledAccount() {
   const { signOut } = useAuth();
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0a' }}>
       <div className="text-center max-w-md px-4">
-        <div className="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-          <span className="text-2xl text-red-400">✕</span>
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '0.5px solid rgba(239,68,68,0.3)' }}
+        >
+          <IconX size={24} color="#ef4444" />
         </div>
-        <h2 className="text-xl font-semibold text-white mb-2">Account disattivato</h2>
-        <p className="text-gray-400 text-sm mb-6">Il tuo account e stato disattivato. Contatta un amministratore.</p>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', marginBottom: '8px' }}>
+          Account disattivato
+        </h2>
+        <p style={{ fontSize: '14px', color: '#888888', marginBottom: '24px' }}>
+          Il tuo account è stato disattivato. Contatta un amministratore.
+        </p>
         <button
           onClick={signOut}
-          className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 border border-gray-700 hover:bg-white/5 transition-colors"
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            color: '#888888',
+            border: '0.5px solid #1e1e1e',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff08')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
         >
           Esci
         </button>
@@ -61,7 +92,7 @@ function AppContent() {
             className="w-10 h-10 rounded-full border-2 animate-spin"
             style={{ borderColor: '#e8a020', borderTopColor: 'transparent' }}
           />
-          <p className="text-gray-400 text-sm">Caricamento...</p>
+          <p style={{ fontSize: '13px', color: '#888888' }}>Caricamento...</p>
         </div>
       </div>
     );
@@ -107,7 +138,7 @@ function AppContent() {
   }
 
   return (
-    <Layout currentPage={currentPage} onNavigate={handleNavigate}>
+    <Layout currentPage={currentPage} onNavigate={handleNavigate} pageTitle={PAGE_TITLES[currentPage]}>
       {renderPage()}
     </Layout>
   );
