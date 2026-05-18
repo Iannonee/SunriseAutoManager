@@ -43,11 +43,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!data) {
       // Auth user exists but profile was deleted — recreate it so the user
       // doesn't get stuck in a login loop.
-      const { data: created } = await supabase
+      const { data: created, error } = await supabase
         .from('profiles')
         .insert({ id: userId })
         .select()
         .single();
+
+      if (error) {
+        // Likely a race condition (getSession + onAuthStateChange both fired).
+        // The other call already inserted the row — just fetch it.
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        setProfile(existing);
+        return existing;
+      }
+
       setProfile(created);
       return created;
     }
