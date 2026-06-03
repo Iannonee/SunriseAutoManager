@@ -8,9 +8,10 @@ interface LayoutProps {
   onNavigate: (page: Page) => void;
   children: React.ReactNode;
   pageTitle?: string;
+  onSwitchToFazione?: () => void;
 }
 
-export default function Layout({ currentPage, onNavigate, children, pageTitle }: LayoutProps) {
+export default function Layout({ currentPage, onNavigate, children, pageTitle, onSwitchToFazione }: LayoutProps) {
   const { profile } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -39,6 +40,7 @@ export default function Layout({ currentPage, onNavigate, children, pageTitle }:
           role={profile.role}
           mobile
           onClose={() => setMenuOpen(false)}
+          onSwitchToFazione={onSwitchToFazione}
         />
       </div>
 
@@ -48,6 +50,7 @@ export default function Layout({ currentPage, onNavigate, children, pageTitle }:
           currentPage={currentPage}
           onNavigate={onNavigate}
           role={profile.role}
+          onSwitchToFazione={onSwitchToFazione}
         />
       </div>
 

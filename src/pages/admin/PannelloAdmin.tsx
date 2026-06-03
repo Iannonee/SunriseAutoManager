@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IconPencil, IconUserOff, IconUserCheck } from '@tabler/icons-react';
 import { supabase } from '../../lib/supabase';
-import { Profile, UserRole, ROLES, fullName, isAdmin } from '../../types';
+import { Profile, UserRole, ROLES, FAZIONE_ROLES, fullName, isAdmin } from '../../types';
 import Modal from '../../components/ui/Modal';
 
 const labelStyle: React.CSSProperties = {
@@ -80,6 +80,7 @@ export default function PannelloAdmin() {
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [editRole, setEditRole] = useState<UserRole>('Venditore');
+  const [editFazioneRole, setEditFazioneRole] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [toggleConfirm, setToggleConfirm] = useState<Profile | null>(null);
 
@@ -95,12 +96,16 @@ export default function PannelloAdmin() {
   function openEdit(p: Profile) {
     setEditingUser(p);
     setEditRole((p.role && ROLES.includes(p.role as UserRole)) ? p.role as UserRole : 'Venditore');
+    setEditFazioneRole(p.ruolo_fazione || '');
   }
 
   async function handleSaveRole() {
     if (!editingUser) return;
     setSaving(true);
-    await supabase.from('profiles').update({ role: editRole }).eq('id', editingUser.id);
+    await supabase.from('profiles').update({
+      role: editRole,
+      ruolo_fazione: editFazioneRole || null,
+    }).eq('id', editingUser.id);
     await fetchProfiles();
     setEditingUser(null);
     setSaving(false);
@@ -178,31 +183,38 @@ export default function PannelloAdmin() {
                       </td>
                       <td style={{ padding: '10px 14px', color: '#555555', fontSize: '12px' }}>{p.discord_username || '—'}</td>
                       <td style={{ padding: '10px 14px' }}>
-                        {hasAssignedRole ? (
-                          <span style={{
-                            fontSize: '11px',
-                            fontWeight: 500,
-                            color: badgeColor,
-                            backgroundColor: `${badgeColor}20`,
-                            border: `0.5px solid ${badgeColor}44`,
-                            borderRadius: '6px',
-                            padding: '3px 8px',
-                          }}>
-                            {p.role}
-                          </span>
-                        ) : (
-                          <span style={{
-                            fontSize: '11px',
-                            fontWeight: 500,
-                            color: '#e8a020',
-                            backgroundColor: '#e8a02015',
-                            border: '0.5px solid #e8a02033',
-                            borderRadius: '6px',
-                            padding: '3px 8px',
-                          }}>
-                            Senza ruolo
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                          {hasAssignedRole ? (
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 500,
+                              color: badgeColor,
+                              backgroundColor: `${badgeColor}20`,
+                              border: `0.5px solid ${badgeColor}44`,
+                              borderRadius: '6px',
+                              padding: '3px 8px',
+                            }}>
+                              {p.role}
+                            </span>
+                          ) : (
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 500,
+                              color: '#e8a020',
+                              backgroundColor: '#e8a02015',
+                              border: '0.5px solid #e8a02033',
+                              borderRadius: '6px',
+                              padding: '3px 8px',
+                            }}>
+                              Senza ruolo
+                            </span>
+                          )}
+                          {p.ruolo_fazione && (
+                            <span style={{ fontSize: '11px', color: '#aaaaaa', backgroundColor: '#ffffff10', border: '0.5px solid #ffffff22', borderRadius: '6px', padding: '3px 8px' }}>
+                              {p.ruolo_fazione}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td style={{ padding: '10px 14px' }}>
                         <span style={{
@@ -269,6 +281,18 @@ export default function PannelloAdmin() {
                 onFocus={e => (e.currentTarget.style.borderColor = '#e8a02066')}
                 onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
                 {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Ruolo Fazione <span style={{ color: '#888888', fontSize: '10px' }}>(opzionale)</span></label>
+              <select
+                value={editFazioneRole}
+                onChange={e => setEditFazioneRole(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#ffffff33')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#2a2a2a')}>
+                <option value="">Nessuno</option>
+                {FAZIONE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>

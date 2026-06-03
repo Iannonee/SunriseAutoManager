@@ -10,6 +10,7 @@ import {
   IconMessageDots,
   IconUsers,
   IconLogout,
+  IconArrowsExchange,
 } from '@tabler/icons-react';
 import { isAdmin } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,6 +34,7 @@ interface SidebarProps {
   role: string;
   mobile?: boolean;
   onClose?: () => void;
+  onSwitchToFazione?: () => void;
 }
 
 interface NavItem {
@@ -48,7 +50,7 @@ interface NavGroup {
   show: boolean;
 }
 
-export default function Sidebar({ currentPage, onNavigate, role, mobile, onClose }: SidebarProps) {
+export default function Sidebar({ currentPage, onNavigate, role, mobile, onClose, onSwitchToFazione }: SidebarProps) {
   const { profile, signOut } = useAuth();
 
   const groups: NavGroup[] = [
@@ -165,6 +167,30 @@ export default function Sidebar({ currentPage, onNavigate, role, mobile, onClose
           </div>
         ))}
       </div>
+
+      {/* Switch to Fazione */}
+      {onSwitchToFazione && (
+        <div className="px-3 pb-2">
+          <button
+            onClick={onSwitchToFazione}
+            className="w-full flex items-center justify-center gap-2"
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#cccccc',
+              backgroundColor: '#ffffff0a',
+              border: '0.5px solid #ffffff1a',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#ffffff15')}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#ffffff0a')}
+          >
+            <IconArrowsExchange size={14} />
+            <span>The Four Shadows</span>
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <div

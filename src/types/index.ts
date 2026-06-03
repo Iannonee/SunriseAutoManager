@@ -12,6 +12,7 @@ export interface Profile {
   cognome: string;
   role: string;
   discord_username: string | null;
+  ruolo_fazione: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -194,4 +195,65 @@ export function canWriteComunicazioniStaff(role: string | null | undefined): boo
 export function fullName(profile: Profile | null | undefined): string {
   if (!profile) return 'Sconosciuto';
   return `${profile.nome} ${profile.cognome}`.trim();
+}
+
+export type FazioneRole = 'Capo' | 'Vicecapo' | 'Mercenario' | 'Soldato';
+export const FAZIONE_ROLES: FazioneRole[] = ['Capo', 'Vicecapo', 'Mercenario', 'Soldato'];
+export function isFazioneLeader(r: string | null | undefined): boolean {
+  return r === 'Capo' || r === 'Vicecapo';
+}
+export interface FazioneMembro {
+  id: string;
+  nome: string;
+  cognome: string;
+  ruolo: string;
+  stato: boolean;
+  data_ingresso: string;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+export interface FazioneFinanza {
+  id: string;
+  descrizione: string;
+  tipo: 'Entrata' | 'Uscita';
+  importo: number;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  creator?: Profile;
+}
+export interface FazionePercentuale {
+  id: string;
+  ruolo: string;
+  percentuale: number;
+}
+export interface FazioneOperazione {
+  id: string;
+  titolo: string;
+  stato: 'Completata' | 'In corso' | 'Fallita';
+  data: string;
+  partecipanti: number;
+  importo: number;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  creator?: Profile;
+}
+export interface FazioneOutfit {
+  id: string;
+  nome: string;
+  ruoli_destinatari: string[];
+  descrizione: string;
+  created_by: string | null;
+  created_at: string;
+}
+export interface FazioneCodice {
+  id: string;
+  numero: number;
+  titolo: string;
+  descrizione: string;
+  ordine: number;
+  updated_by: string | null;
+  updated_at: string;
 }

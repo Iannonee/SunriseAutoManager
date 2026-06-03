@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!p) return 'no-profile';
     if (!p.is_active) return 'disabled';
     if (!p.nome || !p.cognome) return 'needs-rp-name';
-    if (!p.role) return 'needs-role';
+    if (!p.role && !p.ruolo_fazione) return 'needs-role';
     return 'ready';
   }
 

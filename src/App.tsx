@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/auth/Login';
 import RpNameForm from './pages/auth/RpNameForm';
 import PendingApproval from './pages/auth/PendingApproval';
 import Layout from './components/layout/Layout';
 import { Page } from './components/layout/Sidebar';
+import FazioneLayout from './components/layout/FazioneLayout';
+import { FazionePage } from './components/layout/FazioneSidebar';
 import Inventario from './pages/veicoli/Inventario';
 import AutoAcquistate from './pages/veicoli/AutoAcquistate';
 import VeicoliVenduti from './pages/veicoli/VeicoliVenduti';
@@ -15,6 +17,11 @@ import Bilancio from './pages/amministrazione/Bilancio';
 import ComunicazioniStaff from './pages/amministrazione/ComunicazioniStaff';
 import ChatAmministrazione from './pages/amministrazione/ChatAmministrazione';
 import PannelloAdmin from './pages/admin/PannelloAdmin';
+import Membri from './pages/fazione/Membri';
+import Finanze from './pages/fazione/Finanze';
+import Operazioni from './pages/fazione/Operazioni';
+import Outfit from './pages/fazione/Outfit';
+import Codice from './pages/fazione/Codice';
 import { isAdmin } from './types';
 import { IconX } from '@tabler/icons-react';
 
@@ -69,9 +76,27 @@ function DisabledAccount() {
   );
 }
 
+const FAZIONE_PAGE_TITLES: Record<FazionePage, string> = {
+  'membri': 'Membri',
+  'finanze': 'Finanze',
+  'operazioni': 'Operazioni',
+  'outfit': 'Outfit',
+  'codice': 'Codice',
+};
+
 function AppContent() {
   const { authState, profile } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('inventario');
+  const [gestionale, setGestionale] = useState<'sunrise' | 'fazione'>('sunrise');
+  const [fazionePage, setFazionePage] = useState<FazionePage>('membri');
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (profile && !initializedRef.current && authState === 'ready') {
+      initializedRef.current = true;
+      if (!profile.role && profile.ruolo_fazione) setGestionale('fazione');
+    }
+  }, [profile, authState]);
 
   useEffect(() => {
     if (profile) {
@@ -114,6 +139,9 @@ function AppContent() {
     return <DisabledAccount />;
   }
 
+  const hasConc = !!profile?.role;
+  const hasFaz = !!profile?.ruolo_fazione;
+
   function handleNavigate(page: Page) {
     if (!profile) return;
     if ((page === 'bilancio' || page === 'chat-admin') && !isAdmin(profile.role)) return;
@@ -137,8 +165,36 @@ function AppContent() {
     }
   }
 
+  function renderFazionePage() {
+    switch (fazionePage) {
+      case 'membri': return <Membri />;
+      case 'finanze': return <Finanze />;
+      case 'operazioni': return <Operazioni />;
+      case 'outfit': return <Outfit />;
+      case 'codice': return <Codice />;
+    }
+  }
+
+  if (gestionale === 'fazione') {
+    return (
+      <FazioneLayout
+        currentPage={fazionePage}
+        onNavigate={setFazionePage}
+        pageTitle={FAZIONE_PAGE_TITLES[fazionePage]}
+        onSwitchToSunrise={hasConc ? () => setGestionale('sunrise') : undefined}
+      >
+        {renderFazionePage()}
+      </FazioneLayout>
+    );
+  }
+
   return (
-    <Layout currentPage={currentPage} onNavigate={handleNavigate} pageTitle={PAGE_TITLES[currentPage]}>
+    <Layout
+      currentPage={currentPage}
+      onNavigate={handleNavigate}
+      pageTitle={PAGE_TITLES[currentPage]}
+      onSwitchToFazione={hasFaz ? () => setGestionale('fazione') : undefined}
+    >
       {renderPage()}
     </Layout>
   );
