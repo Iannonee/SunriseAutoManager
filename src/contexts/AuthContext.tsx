@@ -75,7 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function updateRpName(nome: string, cognome: string) {
     if (!user) return;
-    await supabase.from('profiles').update({ nome, cognome }).eq('id', user.id);
+    // Sanitise: strip leading/trailing whitespace and enforce max length (matches DB constraint).
+    const safeName = nome.trim().slice(0, 100);
+    const safeCognome = cognome.trim().slice(0, 100);
+    if (!safeName || !safeCognome) return;
+    await supabase.from('profiles').update({ nome: safeName, cognome: safeCognome }).eq('id', user.id);
     await fetchProfile(user.id);
   }
 
