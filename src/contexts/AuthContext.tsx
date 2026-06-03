@@ -84,39 +84,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Supabase fires INITIAL_SESSION immediately (with null if no stored session),
-    // then fires SIGNED_IN once it finishes processing the #access_token= hash from
-    // an OAuth callback. Without protection, INITIAL_SESSION null → loading=false →
-    // Login flashes, then SIGNED_IN arrives and the correct screen replaces it.
-    // When the URL clearly contains an OAuth token we hold the loading state and
-    // wait for SIGNED_IN. A 5 s safety timeout handles invalid/expired tokens.
-    let oauthTimeout: ReturnType<typeof setTimeout> | undefined;
+    let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-
       if (session?.user) {
-        clearTimeout(oauthTimeout);
         (async () => {
           await fetchProfile(session.user.id);
-          setLoading(false);
+          if (mounted) setLoading(false);
         })();
       } else {
         setProfile(null);
-        const isOAuthCallback = window.location.hash.includes('access_token=');
-        if (event === 'INITIAL_SESSION' && isOAuthCallback) {
-          // Hold loading — SIGNED_IN will fire once the hash token is validated.
-          // Safety valve: give up after 5 s so the user isn't stuck forever.
-          oauthTimeout = setTimeout(() => setLoading(false), 5000);
-        } else {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     });
 
+    // Supabase's automatic hash detection can race with the INITIAL_SESSION event.
+    // When landing from an OAuth redirect (#access_token= in URL) we explicitly
+    // parse the token and call setSession so the SIGNED_IN event fires reliably,
+    // regardless of whether the automatic detection won the race or not.
+    const hash = window.location.hash.slice(1);
+    if (hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash);
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token') ?? '';
+      if (access_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).catch(() => {
+          // Token invalid/expired — let loading stay until onAuthStateChange resolves
+          if (mounted) setLoading(false);
+        });
+      }
+    }
+
     return () => {
-      clearTimeout(oauthTimeout);
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
