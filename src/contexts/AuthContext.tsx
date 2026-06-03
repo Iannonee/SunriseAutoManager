@@ -84,26 +84,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Rely entirely on onAuthStateChange. In Supabase JS v2 the first event
-    // fired is INITIAL_SESSION which already includes any session recovered
-    // from the URL hash (OAuth callback) or localStorage — so getSession()
-    // is redundant and causes a race condition where it may resolve to null
-    // before the hash token is processed, incorrectly showing the login screen.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Supabase fires INITIAL_SESSION immediately (with null if no stored session),
+    // then fires SIGNED_IN once it finishes processing the #access_token= hash from
+    // an OAuth callback. Without protection, INITIAL_SESSION null → loading=false →
+    // Login flashes, then SIGNED_IN arrives and the correct screen replaces it.
+    // When the URL clearly contains an OAuth token we hold the loading state and
+    // wait for SIGNED_IN. A 5 s safety timeout handles invalid/expired tokens.
+    let oauthTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
+        clearTimeout(oauthTimeout);
         (async () => {
           await fetchProfile(session.user.id);
           setLoading(false);
         })();
       } else {
         setProfile(null);
-        setLoading(false);
+        const isOAuthCallback = window.location.hash.includes('access_token=');
+        if (event === 'INITIAL_SESSION' && isOAuthCallback) {
+          // Hold loading — SIGNED_IN will fire once the hash token is validated.
+          // Safety valve: give up after 5 s so the user isn't stuck forever.
+          oauthTimeout = setTimeout(() => setLoading(false), 5000);
+        } else {
+          setLoading(false);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(oauthTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function signInWithDiscord() {
