@@ -54,17 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Rely entirely on onAuthStateChange. In Supabase JS v2 the first event
+    // fired is INITIAL_SESSION which already includes any session recovered
+    // from the URL hash (OAuth callback) or localStorage — so getSession()
+    // is redundant and causes a race condition where it may resolve to null
+    // before the hash token is processed, incorrectly showing the login screen.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
